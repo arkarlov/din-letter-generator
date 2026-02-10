@@ -2,6 +2,15 @@
 
 import { useState } from "react";
 
+type LetterData = {
+  recipientName: string;
+  addressLine1: string;
+  addressLine2?: string;
+  addressLine3?: string;
+  subject: string;
+  message: string;
+};
+
 export type FormPanelData = {
   recipientName: string;
   message: string;
@@ -9,59 +18,85 @@ export type FormPanelData = {
 };
 
 export default function FormPanel() {
-  const [formData, setFormData] = useState<FormPanelData>({} as FormPanelData);
+  const [formData, setFormData] = useState<LetterData>({
+    recipientName: "",
+    addressLine1: "",
+    addressLine2: "",
+    addressLine3: "",
+    subject: "",
+    message: "",
+  });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleChange = (e) => {
+    setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
   };
 
-  const print = () => {
-    window.print();
+  const handleDownload = async () => {
+    const res = await fetch("/api/generate-pdf", {
+      method: "POST",
+      body: JSON.stringify(formData),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "letter.pdf";
+    a.click();
   };
 
   return (
-    <div className="bg-white p-4 space-y-4">
-      <h2 className="text-lg font-bold">Form</h2>
-      <label htmlFor="recipientName">Name</label>
+    <main className="p-6 max-w-2xl mx-auto space-y-4">
+      <h1 className="text-2xl font-bold">Создание письма</h1>
+
       <input
-        type="text"
-        id="recipientName"
+        className="border p-2 w-full"
         name="recipientName"
-        value={formData?.recipientName ?? ""}
+        placeholder="Имя получателя"
+        value={formData.recipientName}
         onChange={handleChange}
-        placeholder="Name"
-        className="w-full border p-2 rounded"
       />
-      <label htmlFor="recipientName">Title</label>
+
       <input
-        type="text"
-        id="title"
-        name="title"
-        value={formData?.title ?? ""}
+        className="border p-2 w-full"
+        name="addressLine1"
+        placeholder="Адрес, строка 1"
+        value={formData.addressLine1}
         onChange={handleChange}
-        placeholder="Title"
-        className="w-full border p-2 rounded"
       />
-      <label htmlFor="message">message</label>
-      <textarea
-        id="message"
-        name="message"
-        value={formData?.message ?? ""}
+
+      <input
+        className="border p-2 w-full"
+        name="addressLine2"
+        placeholder="Адрес, строка 2"
+        value={formData.addressLine2}
         onChange={handleChange}
-        placeholder="Message"
-        className="w-full border p-2 rounded h-32"
+      />
+
+      <input
+        className="border p-2 w-full"
+        name="subject"
+        placeholder="Subject"
+        value={formData.addressLine2}
+        onChange={handleChange}
+      />
+
+      <textarea
+        className="border p-2 w-full h-40"
+        name="message"
+        placeholder="Сообщение..."
+        value={formData.message}
+        onChange={handleChange}
       />
 
       <button
-        className="bg-blue-400 text-white px-4 py-2 cursor-pointer"
-        type="button"
-        onClick={print}
+        onClick={handleDownload}
+        className="bg-blue-600 text-white px-4 py-2 rounded"
       >
-        Submit
+        Скачать PDF
       </button>
-    </div>
+    </main>
   );
 }
