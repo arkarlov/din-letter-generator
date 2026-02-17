@@ -3,7 +3,6 @@ import {
   PageSizes,
   StandardFonts,
   grayscale,
-  degrees,
   type PDFPage,
   type PDFFont,
   PDFPageDrawTextOptions,
@@ -124,7 +123,7 @@ function drawAddressBlock(
   data: AddressData,
 ) {
   const size = 10;
-  const lineHeight = size;
+  const lineHeight = size * 1.15;
   let yOffset = 0;
 
   const { x, y, width } = layout;
@@ -157,7 +156,7 @@ function drawInfoBlock(
   date: string,
 ) {
   const size = 11;
-  const lineHeight = size;
+  const lineHeight = size * 1.15;
 
   const { x, y, width } = layout;
 
@@ -178,7 +177,7 @@ function drawDate(
   date?: string,
 ) {
   const { x, y, width } = layout;
-  const currentDate = new Date().toLocaleDateString("de-DE", {
+  const currentDate = new Date().toLocaleDateString("en-EN", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -220,7 +219,7 @@ function drawContent(
   text: string,
 ) {
   const size = 12;
-  const lineHeight = size * 1.15;
+  const lineHeight = size * 1.5;
 
   const { x, y, width } = layout;
 
@@ -424,18 +423,18 @@ export async function generatePDF(data: any) {
   const layout = FORM_LAYOUTS["A"];
 
   // debug
-  drawGrid(page, layout);
+  // drawGrid(page, layout);
 
   drawFoldMarks(page, layout.foldMarks);
   drawAddressBlock(page, layout.address, font, {
-    name: data.recipientName,
+    name: data.recipientAddress,
     line1: data.addressLine1,
     line2: data.addressLine2,
     line3: data.addressLine3,
   });
-  drawInfoBlock(page, layout.info, font, "Name Sername");
-  drawDate(page, layout.date, font);
-  drawSubject(page, layout.subject, fontBold, "Subject");
+  drawInfoBlock(page, layout.info, font, data.senderAddress);
+  drawDate(page, layout.date, font, data.date);
+  drawSubject(page, layout.subject, fontBold, data.subject);
   drawContent(page, layout.content, font, data.message);
 
   const totalPages = pdfDoc.getPageCount();

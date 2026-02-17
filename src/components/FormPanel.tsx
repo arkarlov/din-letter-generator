@@ -1,102 +1,95 @@
 "use client";
 
-import { useState } from "react";
-
-type LetterData = {
-  recipientName: string;
-  addressLine1: string;
-  addressLine2?: string;
-  addressLine3?: string;
-  subject: string;
-  message: string;
-};
-
-export type FormPanelData = {
-  recipientName: string;
-  message: string;
-  title: string;
-};
+import { AddressField } from "./AddressField";
+import { Input } from "./Input";
+import { Textarea } from "./Textarea";
 
 export default function FormPanel() {
-  const [formData, setFormData] = useState<LetterData>({
-    recipientName: "",
-    addressLine1: "",
-    addressLine2: "",
-    addressLine3: "",
-    subject: "",
-    message: "",
-  });
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-  const handleChange = (e) => {
-    setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
-  };
+    const form = e.currentTarget;
+    const formData = new FormData(form);
 
-  const handleDownload = async () => {
-    const res = await fetch("/api/generate-pdf", {
-      method: "POST",
-      body: JSON.stringify(formData),
-      headers: { "Content-Type": "application/json" },
-    });
+    const payload = {
+      recipientAddress:
+        formData.get("recipientAddress") ||
+        `Company Ltd.
+Business Street 5
+54321 Munich`,
+      senderAddress:
+        formData.get("senderAddress") ||
+        `John Doe
+Example Street 12
+12345 Berlin`,
+      subject: formData.get("subject"),
+      message: formData.get("message"),
+    };
 
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
+    try {
+      const res = await fetch("/api/generate-pdf", {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "letter.pdf";
-    a.click();
+      if (!res.ok) {
+        throw new Error("Failed to generate PDF");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "letter.pdf";
+      a.click();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong");
+    }
   };
 
   return (
-    <main className="p-6 max-w-2xl mx-auto space-y-4">
-      <h1 className="text-2xl font-bold">Создание письма</h1>
+    <form onSubmit={handleSubmit} className="p-6 max-w-2xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">Create Letter</h1>
 
-      <input
-        className="border p-2 w-full"
-        name="recipientName"
-        placeholder="Имя получателя"
-        value={formData.recipientName}
-        onChange={handleChange}
-      />
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="space-y-4">
+          <AddressField
+            label="Recipient address"
+            name="recipientAddress"
+            placeholder={`Company Ltd.
+Business Street 5
+54321 Munich`}
+            // required
+          />
+        </div>
+        <div className="space-y-4">
+          <AddressField
+            label="Sender address"
+            name="senderAddress"
+            placeholder={`John Doe
+Example Street 12
+12345 Berlin`}
+          />
+        </div>
+      </div>
 
-      <input
-        className="border p-2 w-full"
-        name="addressLine1"
-        placeholder="Адрес, строка 1"
-        value={formData.addressLine1}
-        onChange={handleChange}
-      />
+      <Input label="Subject" name="subject" required />
 
-      <input
-        className="border p-2 w-full"
-        name="addressLine2"
-        placeholder="Адрес, строка 2"
-        value={formData.addressLine2}
-        onChange={handleChange}
-      />
-
-      <input
-        className="border p-2 w-full"
-        name="subject"
-        placeholder="Subject"
-        value={formData.addressLine2}
-        onChange={handleChange}
-      />
-
-      <textarea
-        className="border p-2 w-full h-40"
-        name="message"
-        placeholder="Сообщение..."
-        value={formData.message}
-        onChange={handleChange}
-      />
+      <Textarea label="Message" name="message" rows={8} required />
 
       <button
-        onClick={handleDownload}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
+        type="submit"
+        className="rounded-xl bg-black px-6 py-3 text-white transition hover:opacity-90 hover:cursor-pointer"
       >
-        Скачать PDF
+        Generate PDF
       </button>
-    </main>
+    </form>
   );
 }
