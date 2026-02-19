@@ -14,16 +14,29 @@ export default function FormPanel() {
     const payload = {
       recipientAddress:
         formData.get("recipientAddress") ||
-        `Company Ltd.
+        `Frau Schmidt
+Company Ltd.
 Business Street 5
 54321 Munich`,
       senderAddress:
         formData.get("senderAddress") ||
-        `John Doe
+        `Personal N:
+8837789
+
+John Doe
 Example Street 12
-12345 Berlin`,
+4 OG, links,
+12345 Berlin
+
+Tel: +492341232515
+e-mail: john@example.com`,
       subject: formData.get("subject"),
       message: formData.get("message"),
+      date: String(formData.get("date") ?? ""),
+      returnInfo: String(
+        formData.get("returnInfo") ||
+          "John Doe, Example Street 12, 12345 Berlin",
+      ),
     };
 
     try {
@@ -79,6 +92,24 @@ Example Street 12
           />
         </div>
       </div>
+
+      <Textarea
+        label="Return information"
+        name="returnInfo"
+        rows={3}
+        placeholder={`Company Ltd.
+Do not forward!
+Registered mail`}
+      />
+
+      <Input
+        label="Date"
+        name="date"
+        type="date"
+        className="max-w-xs"
+        defaultValue={new Date().toISOString().split("T")[0]}
+        required
+      />
 
       <Input label="Subject" name="subject" required />
 

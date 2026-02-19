@@ -13,36 +13,51 @@ export type BlockZone = {
   x: number;
   y: number;
   width: number;
+  height?: number;
 };
+type FontOptions = { size: number; lineHeight: number };
 
-export type FormLayout = {
-  letterheadHeight: number;
+export type Layout = {
+  returnInfo: BlockZone;
   address: BlockZone;
   info: BlockZone;
   date: BlockZone;
   subject: BlockZone;
   content: BlockZone;
-  foldMarks: number[];
+};
+type LayoutMarks = { letterheadHeight: number; foldMarks: number[] };
+type LayoutFont = {
+  [K in keyof Layout]: FontOptions;
 };
 
-export type LetterForm = "A" | "B";
+export type LetterType = "A" | "B";
 
-export const FORM_LAYOUTS: Record<LetterForm, FormLayout> = {
+type VerticalDirection = "top-down" | "bottom-up";
+
+export const LAYOUTS: Record<LetterType, Layout & LayoutMarks> = {
   A: {
     letterheadHeight: 27,
+    returnInfo: {
+      x: 25,
+      y: 27,
+      width: 80,
+      height: 17.7,
+    },
     address: {
       x: 25,
       y: 44.7,
       width: 80,
+      height: 27.3,
     },
     info: {
       x: 125,
       y: 32,
       width: 75,
+      height: 45,
     },
     date: {
       x: 125,
-      y: 75,
+      y: 80,
       width: 75,
     },
     subject: {
@@ -55,24 +70,31 @@ export const FORM_LAYOUTS: Record<LetterForm, FormLayout> = {
       y: 110,
       width: 165,
     },
-    // foldMarks: [87, 192],
-    foldMarks: [87, 190],
+    foldMarks: [87, 192],
   },
   B: {
     letterheadHeight: 45,
+    returnInfo: {
+      x: 25,
+      y: 45,
+      width: 80,
+      height: 17.7,
+    },
     address: {
       x: 25,
       y: 62.7,
       width: 80,
+      height: 27.3,
     },
     info: {
       x: 125,
       y: 50,
       width: 75,
+      height: 45,
     },
     date: {
       x: 125,
-      y: 93,
+      y: 98,
       width: 75,
     },
     subject: {
@@ -89,8 +111,17 @@ export const FORM_LAYOUTS: Record<LetterForm, FormLayout> = {
   },
 };
 
+const LAYOUT_FONT: LayoutFont = {
+  returnInfo: { size: 8, lineHeight: 1 },
+  address: { size: 10, lineHeight: 1.15 },
+  info: { size: 11, lineHeight: 1.15 },
+  date: { size: 11, lineHeight: 1 },
+  subject: { size: 12, lineHeight: 1 },
+  content: { size: 12, lineHeight: 1.5 },
+};
+
 const mmToPt = (mm: number) => mm * 2.83465;
-const ptToMm = (pt: number) => pt / 2.83465;
+const ptToMM = (pt: number) => pt / 2.83465;
 
 const drawPageText = (
   page: PDFPage,
@@ -103,137 +134,67 @@ const drawPageText = (
 
   page.drawText(text, {
     ...options,
-    x: mmToPt(options.x),
-    y: height - mmToPt(options.y) - ascent,
-    maxWidth: options.maxWidth && mmToPt(options.maxWidth),
+    y: height - options.y - ascent,
   });
 };
 
-type AddressData = {
-  name: string;
-  line1: string;
-  line2?: string;
-  line3?: string;
-};
+function getLayoutTextLines(
+  text: string,
+  font: PDFFont,
+  fontSize: number,
+  maxWidthPt: number,
+) {
+  const paragraphs = text.split(/\r?\n/);
 
-function drawAddressBlock(
+  const lines: string[] = [];
+
+  for (const paragraph of paragraphs) {
+    if (!paragraph.trim()) {
+      lines.push("");
+      continue;
+    }
+
+    const words = paragraph.split(" ");
+    let currentLine = "";
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const width = font.widthOfTextAtSize(testLine, fontSize);
+
+      if (width <= maxWidthPt) {
+        currentLine = testLine;
+      } else {
+        if (currentLine) lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+
+    if (currentLine) lines.push(currentLine);
+  }
+
+  return lines;
+}
+
+function renderTextLines(
   page: PDFPage,
   layout: BlockZone,
   font: PDFFont,
-  data: AddressData,
+  lines: string[],
+  fontSize: number,
+  lineHeightPt: number,
 ) {
-  const size = 10;
-  const lineHeight = size * 1.15;
-  let yOffset = 0;
-
-  const { x, y, width } = layout;
-
-  const drawLine = (text?: string) => {
-    if (!text) return;
-
-    drawPageText(page, text, {
-      x: x,
-      y: y + yOffset,
-      maxWidth: width,
+  lines.forEach((line, index) => {
+    drawPageText(page, line, {
+      x: mmToPt(layout.x),
+      y: mmToPt(layout.y) + index * lineHeightPt,
+      maxWidth: mmToPt(layout.width),
       font,
-      size,
-      lineHeight,
+      size: fontSize,
     });
-
-    yOffset += ptToMm(lineHeight);
-  };
-
-  drawLine(data.name);
-  drawLine(data.line1);
-  drawLine(data.line2);
-  drawLine(data.line3);
-}
-
-function drawInfoBlock(
-  page: PDFPage,
-  layout: BlockZone,
-  font: PDFFont,
-  date: string,
-) {
-  const size = 11;
-  const lineHeight = size * 1.15;
-
-  const { x, y, width } = layout;
-
-  drawPageText(page, date, {
-    x: x,
-    y: y,
-    maxWidth: width,
-    font,
-    size,
-    lineHeight,
   });
 }
 
-function drawDate(
-  page: PDFPage,
-  layout: BlockZone,
-  font: PDFFont,
-  date?: string,
-) {
-  const { x, y, width } = layout;
-  const currentDate = new Date().toLocaleDateString("en-EN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  drawPageText(page, date ?? currentDate, {
-    x: x,
-    y: y,
-    maxWidth: width,
-    font,
-    size: 11,
-    lineHeight: 11,
-  });
-}
-function drawSubject(
-  page: PDFPage,
-  layout: BlockZone,
-  font: PDFFont,
-  text: string,
-) {
-  const size = 12;
-  const lineHeight = size;
-
-  const { x, y, width } = layout;
-
-  drawPageText(page, text, {
-    x: x,
-    y: y,
-    maxWidth: width,
-    font,
-    size,
-    lineHeight,
-  });
-}
-
-function drawContent(
-  page: PDFPage,
-  layout: BlockZone,
-  font: PDFFont,
-  text: string,
-) {
-  const size = 12;
-  const lineHeight = size * 1.5;
-
-  const { x, y, width } = layout;
-
-  drawPageText(page, text, {
-    x: x,
-    y: y,
-    maxWidth: width,
-    font,
-    size,
-    lineHeight,
-  });
-}
-
-function drawFoldMarks(page: PDFPage, layout: FormLayout["foldMarks"]) {
+function renderFoldMarks(page: PDFPage, layout: LayoutMarks["foldMarks"]) {
   const { height } = page.getSize();
   const color = grayscale(0.7);
   const hole = height / 2;
@@ -263,25 +224,60 @@ function drawPageNumber(
   pageNumber: number,
   totalPages: number,
 ) {
-  const { height } = page.getSize();
   const text = `Seite ${pageNumber} von ${totalPages}`;
+  // const text = `Page ${pageNumber} of ${totalPages}`;
 
   const size = 8;
   const textWidth = font.widthOfTextAtSize(text, size);
-  const fontHeight = font.sizeAtHeight(size);
+  const ascent = font.heightAtSize(size);
 
   const rightEdgeMm = 25 + 165;
 
-  drawPageText(page, text, {
-    x: rightEdgeMm - ptToMm(textWidth),
-    y: ptToMm(height) - (7 + ptToMm(fontHeight)),
+  page.drawText(text, {
+    x: mmToPt(rightEdgeMm) - textWidth,
+    y: mmToPt(7) + ascent / 2,
     font,
     size,
     lineHeight: size,
   });
 }
 
-const drawGrid = (page: PDFPage, layout: FormLayout) => {
+function renderTextBlock(
+  text: string,
+  page: PDFPage,
+  layout: BlockZone,
+  font: PDFFont,
+  fontOptions: FontOptions,
+  direction: VerticalDirection = "top-down",
+) {
+  const { size, lineHeight } = fontOptions;
+
+  const lines = getLayoutTextLines(text, font, size, mmToPt(layout.width));
+
+  const lineHeightPt = size * lineHeight;
+  const totalHeightMm = lines.length * ptToMM(lineHeightPt);
+
+  if (layout.height && totalHeightMm > layout.height) {
+    throw new Error("Return info exceeds allowed height");
+  }
+
+  let startYmm = layout.y;
+
+  if (layout.height && direction === "bottom-up") {
+    startYmm = layout.y + (layout.height - totalHeightMm);
+  }
+
+  renderTextLines(
+    page,
+    { ...layout, y: startYmm },
+    font,
+    lines,
+    size,
+    lineHeightPt,
+  );
+}
+
+export const renderGrid = (page: PDFPage, layout: Layout & LayoutMarks) => {
   // frame 5mm
   page.drawRectangle({
     x: mmToPt(5),
@@ -420,25 +416,50 @@ export async function generatePDF(data: any) {
   page.setLineHeight(12 * 1.15);
   page.setFontColor(rgb(0, 0, 0));
 
-  const layout = FORM_LAYOUTS["A"];
+  const layout = LAYOUTS["A"];
+
+  const {
+    date,
+    recipientAddress,
+    senderAddress,
+    subject,
+    message,
+    returnInfo,
+  } = data;
+
+  const formattedDate = new Date(date).toLocaleDateString("de-DE", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   // debug
-  // drawGrid(page, layout);
+  renderGrid(page, layout);
 
-  drawFoldMarks(page, layout.foldMarks);
-  drawAddressBlock(page, layout.address, font, {
-    name: data.recipientAddress,
-    line1: data.addressLine1,
-    line2: data.addressLine2,
-    line3: data.addressLine3,
-  });
-  drawInfoBlock(page, layout.info, font, data.senderAddress);
-  drawDate(page, layout.date, font, data.date);
-  drawSubject(page, layout.subject, fontBold, data.subject);
-  drawContent(page, layout.content, font, data.message);
+  renderFoldMarks(page, layout.foldMarks);
+
+  renderTextBlock(
+    returnInfo,
+    page,
+    layout.returnInfo,
+    font,
+    LAYOUT_FONT.returnInfo,
+    "bottom-up",
+  );
+  renderTextBlock(
+    recipientAddress,
+    page,
+    layout.address,
+    font,
+    LAYOUT_FONT.address,
+    "bottom-up",
+  );
+  renderTextBlock(senderAddress, page, layout.info, font, LAYOUT_FONT.info);
+  renderTextBlock(formattedDate, page, layout.date, font, LAYOUT_FONT.date);
+  renderTextBlock(subject, page, layout.subject, fontBold, LAYOUT_FONT.subject);
+  renderTextBlock(message, page, layout.content, font, LAYOUT_FONT.content);
 
   const totalPages = pdfDoc.getPageCount();
-
   pdfDoc.getPages().forEach((page, i) => {
     drawPageNumber(page, font, i + 1, totalPages);
   });
