@@ -1,11 +1,28 @@
-import { generatePDF, type PdfData } from "@/utils/pdf";
+import { generatePDF } from "@/utils/pdf";
+import { pdfDataSchema } from "@/utils/schemas";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  try {
-    const data = (await req.json()) as PdfData;
+  const body = await req.json();
 
-    const pdfBytes = await generatePDF(data);
+  const parsed = pdfDataSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return new NextResponse(
+      JSON.stringify({
+        error: "Validation failed",
+      }),
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+  }
+
+  try {
+    const pdfBytes = await generatePDF(parsed.data);
 
     return new NextResponse(
       new Blob([Buffer.from(pdfBytes)], { type: "application/pdf" }),

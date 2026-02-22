@@ -8,6 +8,7 @@ import {
   PDFPageDrawTextOptions,
   rgb,
 } from "pdf-lib";
+import { PdfData } from "./schemas";
 
 type BlockZone = {
   x: number;
@@ -33,18 +34,6 @@ type Layout = TextLayout & { letterheadHeight: number; foldMarks: number[] };
 type LetterType = "A" | "B";
 
 type VerticalDirection = "top-down" | "bottom-up";
-
-/**
- * Data structure for PDF generation
- */
-export interface PdfData {
-  date: string | Date;
-  recipientAddress: string;
-  senderAddress: string;
-  subject: string;
-  message: string;
-  returnInfo: string;
-}
 
 const LAYOUTS: Record<LetterType, Layout> = {
   A: {
@@ -472,7 +461,9 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
       returnInfo,
     } = data;
 
-    const formattedDate = new Date(date).toLocaleDateString("de-DE", {
+    const formattedDate = (
+      date ? new Date(date) : new Date()
+    ).toLocaleDateString("de-DE", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -483,22 +474,26 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
 
     renderFoldMarks(page, layout.foldMarks);
 
-    renderTextBlock(
-      returnInfo,
-      page,
-      layout.returnInfo,
-      font,
-      LAYOUT_FONT.returnInfo,
-      "bottom-up",
-    );
-    renderTextBlock(
-      recipientAddress,
-      page,
-      layout.address,
-      font,
-      LAYOUT_FONT.address,
-      "bottom-up",
-    );
+    if (returnInfo) {
+      renderTextBlock(
+        returnInfo,
+        page,
+        layout.returnInfo,
+        font,
+        LAYOUT_FONT.returnInfo,
+        "bottom-up",
+      );
+    }
+    if (recipientAddress) {
+      renderTextBlock(
+        recipientAddress,
+        page,
+        layout.address,
+        font,
+        LAYOUT_FONT.address,
+        "bottom-up",
+      );
+    }
     renderTextBlock(senderAddress, page, layout.info, font, LAYOUT_FONT.info);
     renderTextBlock(formattedDate, page, layout.date, font, LAYOUT_FONT.date);
     renderTextBlock(
