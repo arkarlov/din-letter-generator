@@ -1,26 +1,48 @@
 "use client";
 
+import { useState } from "react";
 import { AddressField } from "./AddressField";
 import { Input } from "./Input";
 import { Textarea } from "./Textarea";
 
 export default function FormPanel() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
+    setIsLoading(true);
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData(form);
 
-    const payload = {
-      recipientAddress:
-        formData.get("recipientAddress") ||
-        `Frau Schmidt
+      const subject = formData.get("subject") as string;
+      const message = formData.get("message") as string;
+      const date = formData.get("date") as string;
+
+      // Validate required fields
+      if (!subject?.trim()) {
+        throw new Error("Subject is required");
+      }
+      if (!message?.trim()) {
+        throw new Error("Message is required");
+      }
+      if (!date) {
+        throw new Error("Date is required");
+      }
+
+      const payload = {
+        recipientAddress:
+          formData.get("recipientAddress") ||
+          `Frau Schmidt
 Company Ltd.
 Business Street 5
 54321 Munich`,
-      senderAddress:
-        formData.get("senderAddress") ||
-        `Personal N:
+        senderAddress:
+          formData.get("senderAddress") ||
+          `Personal N:
 8837789
 
 John Doe
@@ -30,16 +52,15 @@ Example Street 12
 
 Tel: +492341232515
 e-mail: john@example.com`,
-      subject: formData.get("subject"),
-      message: formData.get("message"),
-      date: String(formData.get("date") ?? ""),
-      returnInfo: String(
-        formData.get("returnInfo") ||
-          "John Doe, Example Street 12, 12345 Berlin",
-      ),
-    };
+        subject,
+        message,
+        date,
+        returnInfo: String(
+          formData.get("returnInfo") ||
+            "John Doe, Example Street 12, 12345 Berlin",
+        ),
+      };
 
-    try {
       const res = await fetch("/api/generate-pdf", {
         method: "POST",
         body: JSON.stringify(payload),
@@ -49,10 +70,24 @@ e-mail: john@example.com`,
       });
 
       if (!res.ok) {
-        throw new Error("Failed to generate PDF");
+        let errorMessage = "Failed to generate PDF";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // If response is not JSON, use status text
+          errorMessage = res.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       const blob = await res.blob();
+
+      // Verify blob is not empty
+      if (blob.size === 0) {
+        throw new Error("Generated PDF is empty");
+      }
+
       const url = window.URL.createObjectURL(blob);
 
       const a = document.createElement("a");
@@ -62,14 +97,24 @@ e-mail: john@example.com`,
 
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error(error);
-      alert("Something went wrong");
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      console.error("PDF generation error:", error);
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="p-6 max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Create Letter</h1>
+
+      {error && (
+        <div className="rounded-lg bg-red-50 p-4 border border-red-200">
+          <p className="text-red-700 text-sm">{error}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="space-y-4">
@@ -117,9 +162,10 @@ Registered mail`}
 
       <button
         type="submit"
-        className="rounded-xl bg-black px-6 py-3 text-white transition hover:opacity-90 hover:cursor-pointer"
+        disabled={isLoading}
+        className="rounded-xl bg-black px-6 py-3 text-white transition hover:opacity-90 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Generate PDF
+        {isLoading ? "Generating PDF..." : "Generate PDF"}
       </button>
     </form>
   );

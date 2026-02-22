@@ -34,6 +34,18 @@ export type LetterType = "A" | "B";
 
 type VerticalDirection = "top-down" | "bottom-up";
 
+/**
+ * Data structure for PDF generation
+ */
+export interface PdfData {
+  date: string | Date;
+  recipientAddress: string;
+  senderAddress: string;
+  subject: string;
+  message: string;
+  returnInfo: string;
+}
+
 export const LAYOUTS: Record<LetterType, Layout & LayoutMarks> = {
   A: {
     letterheadHeight: 27,
@@ -113,7 +125,7 @@ export const LAYOUTS: Record<LetterType, Layout & LayoutMarks> = {
 
 const LAYOUT_FONT: LayoutFont = {
   returnInfo: { size: 8, lineHeight: 1 },
-  address: { size: 10, lineHeight: 1.15 },
+  address: { size: 10, lineHeight: 1.1 },
   info: { size: 11, lineHeight: 1.15 },
   date: { size: 11, lineHeight: 1 },
   subject: { size: 12, lineHeight: 1 },
@@ -405,66 +417,112 @@ export const renderGrid = (page: PDFPage, layout: Layout & LayoutMarks) => {
   });
 };
 
-export async function generatePDF(data: any) {
-  const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage(PageSizes.A4);
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+/**
+ * Generate a PDF document with letter content
+ * @param data - The letter data containing all required fields
+ * @returns Uint8Array containing the PDF bytes
+ * @throws Error if required fields are missing or invalid
+ * @throws Error if text content exceeds layout constraints
+ * @example
+ * const pdfBytes = await generatePDF({
+ *   date: new Date(),
+ *   recipientAddress: '123 Main St',
+ *   senderAddress: '456 Oak Ave',
+ *   subject: 'Invoice',
+ *   message: 'Dear Customer...',
+ *   returnInfo: 'Return to Sender'
+ * });
+ */
+export async function generatePDF(data: PdfData): Promise<Uint8Array> {
+  // Validate required fields
+  const requiredFields: (keyof PdfData)[] = [
+    "date",
+    "recipientAddress",
+    "senderAddress",
+    "subject",
+    "message",
+    "returnInfo",
+  ];
 
-  page.setFont(font);
-  page.setFontSize(12);
-  page.setLineHeight(12 * 1.15);
-  page.setFontColor(rgb(0, 0, 0));
+  for (const field of requiredFields) {
+    if (!data[field]) {
+      throw new Error(`Missing required field: ${field}`);
+    }
+  }
 
-  const layout = LAYOUTS["A"];
+  try {
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage(PageSizes.A4);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const {
-    date,
-    recipientAddress,
-    senderAddress,
-    subject,
-    message,
-    returnInfo,
-  } = data;
+    page.setFont(font);
+    page.setFontSize(12);
+    page.setLineHeight(12 * 1.15);
+    page.setFontColor(rgb(0, 0, 0));
 
-  const formattedDate = new Date(date).toLocaleDateString("de-DE", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+    const layout = LAYOUTS["A"];
 
-  // debug
-  renderGrid(page, layout);
+    const {
+      date,
+      recipientAddress,
+      senderAddress,
+      subject,
+      message,
+      returnInfo,
+    } = data;
 
-  renderFoldMarks(page, layout.foldMarks);
+    const formattedDate = new Date(date).toLocaleDateString("de-DE", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
 
-  renderTextBlock(
-    returnInfo,
-    page,
-    layout.returnInfo,
-    font,
-    LAYOUT_FONT.returnInfo,
-    "bottom-up",
-  );
-  renderTextBlock(
-    recipientAddress,
-    page,
-    layout.address,
-    font,
-    LAYOUT_FONT.address,
-    "bottom-up",
-  );
-  renderTextBlock(senderAddress, page, layout.info, font, LAYOUT_FONT.info);
-  renderTextBlock(formattedDate, page, layout.date, font, LAYOUT_FONT.date);
-  renderTextBlock(subject, page, layout.subject, fontBold, LAYOUT_FONT.subject);
-  renderTextBlock(message, page, layout.content, font, LAYOUT_FONT.content);
+    // debug
+    // renderGrid(page, layout);
 
-  const totalPages = pdfDoc.getPageCount();
-  pdfDoc.getPages().forEach((page, i) => {
-    drawPageNumber(page, font, i + 1, totalPages);
-  });
+    renderFoldMarks(page, layout.foldMarks);
 
-  const pdfBytes = await pdfDoc.save();
+    renderTextBlock(
+      returnInfo,
+      page,
+      layout.returnInfo,
+      font,
+      LAYOUT_FONT.returnInfo,
+      "bottom-up",
+    );
+    renderTextBlock(
+      recipientAddress,
+      page,
+      layout.address,
+      font,
+      LAYOUT_FONT.address,
+      "bottom-up",
+    );
+    renderTextBlock(senderAddress, page, layout.info, font, LAYOUT_FONT.info);
+    renderTextBlock(formattedDate, page, layout.date, font, LAYOUT_FONT.date);
+    renderTextBlock(
+      subject,
+      page,
+      layout.subject,
+      fontBold,
+      LAYOUT_FONT.subject,
+    );
+    renderTextBlock(message, page, layout.content, font, LAYOUT_FONT.content);
 
-  return pdfBytes;
+    const totalPages = pdfDoc.getPageCount();
+    pdfDoc.getPages().forEach((page, i) => {
+      drawPageNumber(page, font, i + 1, totalPages);
+    });
+
+    const pdfBytes = await pdfDoc.save();
+
+    return pdfBytes;
+  } catch (error) {
+    throw new Error(
+      `PDF generation failed: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`,
+    );
+  }
 }
