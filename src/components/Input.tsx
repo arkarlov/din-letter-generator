@@ -10,9 +10,9 @@ type Props = {
 } & InputHTMLAttributes<HTMLInputElement>;
 
 export const Input = forwardRef<HTMLInputElement, Props>(
-  ({ label, name, error, className, ...props }, ref) => {
+  ({ label, name, error, className, required, ...props }, ref) => {
     return (
-      <Field label={label} name={name} error={error}>
+      <Field label={label} name={name} error={error} required={required}>
         <input
           ref={ref}
           id={name}
@@ -24,6 +24,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(
               : "border-gray-300 focus:ring-2 focus:ring-black/20",
             className,
           )}
+          required={required}
           {...props}
         />
       </Field>

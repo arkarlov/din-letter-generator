@@ -3,13 +3,15 @@ type FieldProps = {
   name?: string;
   error?: string;
   children: React.ReactNode;
+  required?: boolean;
 };
 
-export function Field({ label, name, error, children }: FieldProps) {
+export function Field({ label, name, error, children, required }: FieldProps) {
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={name} className="text-sm font-medium text-gray-700">
         {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
 
       {children}

@@ -9,7 +9,7 @@ import {
   rgb,
 } from "pdf-lib";
 
-export type BlockZone = {
+type BlockZone = {
   x: number;
   y: number;
   width: number;
@@ -17,7 +17,7 @@ export type BlockZone = {
 };
 type FontOptions = { size: number; lineHeight: number };
 
-export type Layout = {
+type TextLayout = {
   returnInfo: BlockZone;
   address: BlockZone;
   info: BlockZone;
@@ -25,12 +25,12 @@ export type Layout = {
   subject: BlockZone;
   content: BlockZone;
 };
-type LayoutMarks = { letterheadHeight: number; foldMarks: number[] };
-type LayoutFont = {
-  [K in keyof Layout]: FontOptions;
+type FontLayout = {
+  [K in keyof TextLayout]: FontOptions;
 };
+type Layout = TextLayout & { letterheadHeight: number; foldMarks: number[] };
 
-export type LetterType = "A" | "B";
+type LetterType = "A" | "B";
 
 type VerticalDirection = "top-down" | "bottom-up";
 
@@ -46,7 +46,7 @@ export interface PdfData {
   returnInfo: string;
 }
 
-export const LAYOUTS: Record<LetterType, Layout & LayoutMarks> = {
+const LAYOUTS: Record<LetterType, Layout> = {
   A: {
     letterheadHeight: 27,
     returnInfo: {
@@ -123,7 +123,7 @@ export const LAYOUTS: Record<LetterType, Layout & LayoutMarks> = {
   },
 };
 
-const LAYOUT_FONT: LayoutFont = {
+const LAYOUT_FONT: FontLayout = {
   returnInfo: { size: 8, lineHeight: 1 },
   address: { size: 10, lineHeight: 1.1 },
   info: { size: 11, lineHeight: 1.15 },
@@ -206,7 +206,7 @@ function renderTextLines(
   });
 }
 
-function renderFoldMarks(page: PDFPage, layout: LayoutMarks["foldMarks"]) {
+function renderFoldMarks(page: PDFPage, layout: Layout["foldMarks"]) {
   const { height } = page.getSize();
   const color = grayscale(0.7);
   const hole = height / 2;
@@ -289,7 +289,7 @@ function renderTextBlock(
   );
 }
 
-export const renderGrid = (page: PDFPage, layout: Layout & LayoutMarks) => {
+export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
   // frame 5mm
   page.drawRectangle({
     x: mmToPt(5),
