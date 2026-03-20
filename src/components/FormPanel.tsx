@@ -2,8 +2,9 @@
 
 import { usePdfGenerator } from "@/hooks/usePdfGenerator";
 import { AddressField } from "./AddressField";
-import { Input } from "./Input";
-import { Textarea } from "./Textarea";
+import { Input } from "./form/Input";
+import { Textarea } from "./form/Textarea";
+import { parseFormData } from "./FormPanel.helper";
 
 export default function FormPanel() {
   const { isLoading, error, generatePdf } = usePdfGenerator();
@@ -11,7 +12,8 @@ export default function FormPanel() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    await generatePdf(formData);
+    const payload = parseFormData(formData);
+    await generatePdf(payload);
   };
 
   return (
@@ -29,24 +31,24 @@ export default function FormPanel() {
           <AddressField
             label="Recipient address"
             name="recipientAddress"
-            placeholder={`Company Ltd.
-Business Street 5
-54321 Munich`}
+            placeholder={`Musterfirma GmbH
+Musterstraße 1
+12345 Musterstadt`}
           />
           <Textarea
             className="resize-none"
             label="Return information"
             name="returnInfo"
             rows={3}
-            placeholder={`John Doe, Example Street 12, 12345 Berlin`}
+            placeholder={`Max Mustermann, Musterstraße 12, 12345 Berlin`}
           />
         </div>
         <div className="space-y-4">
           <AddressField
-            label="Sender address"
+            label="Sender information"
             name="senderAddress"
-            placeholder={`John Doe
-Example Street 12
+            placeholder={`Max Mustermann
+Musterstraße 12
 12345 Berlin`}
             required
           />

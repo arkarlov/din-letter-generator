@@ -1,125 +1,16 @@
 import {
-  PDFDocument,
-  PageSizes,
-  StandardFonts,
   grayscale,
   type PDFPage,
   type PDFFont,
   PDFPageDrawTextOptions,
-  rgb,
 } from "pdf-lib";
-import { PdfData } from "./schemas";
-
-type BlockZone = {
-  x: number;
-  y: number;
-  width: number;
-  height?: number;
-};
-type FontOptions = { size: number; lineHeight: number };
-
-type TextLayout = {
-  returnInfo: BlockZone;
-  address: BlockZone;
-  info: BlockZone;
-  date: BlockZone;
-  subject: BlockZone;
-  content: BlockZone;
-};
-type FontLayout = {
-  [K in keyof TextLayout]: FontOptions;
-};
-type Layout = TextLayout & { letterheadHeight: number; foldMarks: number[] };
-
-type LetterType = "A" | "B";
-
-type VerticalDirection = "top-down" | "bottom-up";
-
-const LAYOUTS: Record<LetterType, Layout> = {
-  A: {
-    letterheadHeight: 27,
-    returnInfo: {
-      x: 25,
-      y: 27,
-      width: 80,
-      height: 17.7,
-    },
-    address: {
-      x: 25,
-      y: 44.7,
-      width: 80,
-      height: 27.3,
-    },
-    info: {
-      x: 125,
-      y: 32,
-      width: 75,
-      height: 45,
-    },
-    date: {
-      x: 125,
-      y: 80,
-      width: 75,
-    },
-    subject: {
-      x: 25,
-      y: 90,
-      width: 165,
-    },
-    content: {
-      x: 25,
-      y: 110,
-      width: 165,
-    },
-    foldMarks: [87, 192],
-  },
-  B: {
-    letterheadHeight: 45,
-    returnInfo: {
-      x: 25,
-      y: 45,
-      width: 80,
-      height: 17.7,
-    },
-    address: {
-      x: 25,
-      y: 62.7,
-      width: 80,
-      height: 27.3,
-    },
-    info: {
-      x: 125,
-      y: 50,
-      width: 75,
-      height: 45,
-    },
-    date: {
-      x: 125,
-      y: 98,
-      width: 75,
-    },
-    subject: {
-      x: 25,
-      y: 106,
-      width: 165,
-    },
-    content: {
-      x: 25,
-      y: 125,
-      width: 165,
-    },
-    foldMarks: [105, 210],
-  },
-};
-
-const LAYOUT_FONT: FontLayout = {
-  returnInfo: { size: 8, lineHeight: 1 },
-  address: { size: 10, lineHeight: 1.1 },
-  info: { size: 11, lineHeight: 1.15 },
-  date: { size: 11, lineHeight: 1 },
-  subject: { size: 12, lineHeight: 1 },
-  content: { size: 12, lineHeight: 1.5 },
-};
+import {
+  BlockZone,
+  FontOptions,
+  Layout,
+  TextLayout,
+  VerticalDirection,
+} from "./types";
 
 const mmToPt = (mm: number) => mm * 2.83465;
 const ptToMM = (pt: number) => pt / 2.83465;
@@ -143,7 +34,7 @@ function getLayoutTextLines(
   text: string,
   font: PDFFont,
   fontSize: number,
-  maxWidthPt: number,
+  maxWidthMM: number,
 ) {
   const paragraphs = text.split(/\r?\n/);
 
@@ -162,6 +53,8 @@ function getLayoutTextLines(
       const testLine = currentLine ? `${currentLine} ${word}` : word;
       const width = font.widthOfTextAtSize(testLine, fontSize);
 
+      const maxWidthPt = mmToPt(maxWidthMM);
+
       if (width <= maxWidthPt) {
         currentLine = testLine;
       } else {
@@ -176,7 +69,7 @@ function getLayoutTextLines(
   return lines;
 }
 
-function renderTextLines(
+export function renderTextLines(
   page: PDFPage,
   layout: BlockZone,
   font: PDFFont,
@@ -195,7 +88,7 @@ function renderTextLines(
   });
 }
 
-function renderFoldMarks(page: PDFPage, layout: Layout["foldMarks"]) {
+export function renderFoldMarks(page: PDFPage, layout: Layout["foldMarks"]) {
   const { height } = page.getSize();
   const color = grayscale(0.7);
   const hole = height / 2;
@@ -219,15 +112,7 @@ function renderFoldMarks(page: PDFPage, layout: Layout["foldMarks"]) {
   });
 }
 
-function drawPageNumber(
-  page: PDFPage,
-  font: PDFFont,
-  pageNumber: number,
-  totalPages: number,
-) {
-  const text = `Seite ${pageNumber} von ${totalPages}`;
-  // const text = `Page ${pageNumber} of ${totalPages}`;
-
+export function renderPageNumber(page: PDFPage, font: PDFFont, text: string) {
   const size = 8;
   const textWidth = font.widthOfTextAtSize(text, size);
   const ascent = font.heightAtSize(size);
@@ -243,7 +128,7 @@ function drawPageNumber(
   });
 }
 
-function renderTextBlock(
+export function renderTextBlock(
   text: string,
   page: PDFPage,
   layout: BlockZone,
@@ -253,7 +138,7 @@ function renderTextBlock(
 ) {
   const { size, lineHeight } = fontOptions;
 
-  const lines = getLayoutTextLines(text, font, size, mmToPt(layout.width));
+  const lines = getLayoutTextLines(text, font, size, layout.width);
 
   const lineHeightPt = size * lineHeight;
   const totalHeightMm = lines.length * ptToMM(lineHeightPt);
@@ -277,6 +162,59 @@ function renderTextBlock(
     lineHeightPt,
   );
 }
+
+export function paginateTextLines({
+  lines,
+  firstPageMaxLines,
+  nextPageMaxLines,
+}: {
+  lines: string[];
+  firstPageMaxLines: number;
+  nextPageMaxLines: number;
+}) {
+  const pages: string[][] = [];
+
+  pages.push(lines.slice(0, firstPageMaxLines));
+
+  let i = firstPageMaxLines;
+
+  while (i < lines.length) {
+    pages.push(lines.slice(i, i + nextPageMaxLines));
+    i += nextPageMaxLines;
+  }
+
+  return pages;
+}
+
+export const paginateContent = (
+  content: string,
+  font: PDFFont,
+  fontOptions: FontOptions,
+  layout: Layout,
+) => {
+  const contentLines = getLayoutTextLines(
+    content,
+    font,
+    fontOptions.size,
+    layout.content.width,
+  );
+  const lineHeightPt = fontOptions.size * fontOptions.lineHeight;
+
+  const firstPageHeightPt = getPageHeightPt(layout.content.y);
+  const firstPageMaxLines = Math.floor(firstPageHeightPt / lineHeightPt);
+
+  const nextPageHeightPt = getPageHeightPt(layout.letterheadHeight);
+  const nextPageMaxLines = Math.floor(nextPageHeightPt / lineHeightPt);
+
+  return paginateTextLines({
+    lines: contentLines,
+    firstPageMaxLines,
+    nextPageMaxLines,
+  });
+};
+
+export const getPageHeightPt = (topMm: number, bottomMm: number = 25) =>
+  mmToPt(297 - topMm - bottomMm);
 
 export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
   // frame 5mm
@@ -405,119 +343,3 @@ export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
     thickness: 1,
   });
 };
-
-/**
- * Generate a PDF document with letter content
- * @param data - The letter data containing all required fields
- * @returns Uint8Array containing the PDF bytes
- * @throws Error if required fields are missing or invalid
- * @throws Error if text content exceeds layout constraints
- * @example
- * const pdfBytes = await generatePDF({
- *   date: new Date(),
- *   recipientAddress: '123 Main St',
- *   senderAddress: '456 Oak Ave',
- *   subject: 'Invoice',
- *   message: 'Dear Customer...',
- *   returnInfo: 'Return to Sender'
- * });
- */
-export async function generatePDF(data: PdfData): Promise<Uint8Array> {
-  // Validate required fields
-  const requiredFields: (keyof PdfData)[] = [
-    "date",
-    "recipientAddress",
-    "senderAddress",
-    "subject",
-    "message",
-    "returnInfo",
-  ];
-
-  for (const field of requiredFields) {
-    if (!data[field]) {
-      throw new Error(`Missing required field: ${field}`);
-    }
-  }
-
-  try {
-    const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage(PageSizes.A4);
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-    page.setFont(font);
-    page.setFontSize(12);
-    page.setLineHeight(12 * 1.15);
-    page.setFontColor(rgb(0, 0, 0));
-
-    const layout = LAYOUTS["A"];
-
-    const {
-      date,
-      recipientAddress,
-      senderAddress,
-      subject,
-      message,
-      returnInfo,
-    } = data;
-
-    const formattedDate = (
-      date ? new Date(date) : new Date()
-    ).toLocaleDateString("de-DE", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-    // debug
-    // renderGrid(page, layout);
-
-    renderFoldMarks(page, layout.foldMarks);
-
-    if (returnInfo) {
-      renderTextBlock(
-        returnInfo,
-        page,
-        layout.returnInfo,
-        font,
-        LAYOUT_FONT.returnInfo,
-        "bottom-up",
-      );
-    }
-    if (recipientAddress) {
-      renderTextBlock(
-        recipientAddress,
-        page,
-        layout.address,
-        font,
-        LAYOUT_FONT.address,
-        "bottom-up",
-      );
-    }
-    renderTextBlock(senderAddress, page, layout.info, font, LAYOUT_FONT.info);
-    renderTextBlock(formattedDate, page, layout.date, font, LAYOUT_FONT.date);
-    renderTextBlock(
-      subject,
-      page,
-      layout.subject,
-      fontBold,
-      LAYOUT_FONT.subject,
-    );
-    renderTextBlock(message, page, layout.content, font, LAYOUT_FONT.content);
-
-    const totalPages = pdfDoc.getPageCount();
-    pdfDoc.getPages().forEach((page, i) => {
-      drawPageNumber(page, font, i + 1, totalPages);
-    });
-
-    const pdfBytes = await pdfDoc.save();
-
-    return pdfBytes;
-  } catch (error) {
-    throw new Error(
-      `PDF generation failed: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`,
-    );
-  }
-}

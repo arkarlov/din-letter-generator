@@ -1,5 +1,6 @@
-import { generatePDF } from "@/utils/pdf";
-import { pdfDataSchema } from "@/utils/schemas";
+import { generatePDF } from "@/components/pdf/generatePDF";
+import { pdfDataSchema } from "@/components/pdf/types";
+
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {

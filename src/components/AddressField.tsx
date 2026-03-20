@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Textarea } from "./Textarea";
+import { Textarea } from "./form/Textarea";
 
 type Props = {
   label: string;
