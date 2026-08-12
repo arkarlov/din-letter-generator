@@ -6,7 +6,7 @@ import {
   renderTextLines,
   paginateContent,
 } from "./utils";
-import { PdfData } from "./types";
+import { PdfData, pdfDataSchema } from "./types";
 import { LAYOUT_FONT, LAYOUTS } from "./config";
 
 /**
@@ -15,32 +15,10 @@ import { LAYOUT_FONT, LAYOUTS } from "./config";
  * @returns Uint8Array containing the PDF bytes
  * @throws Error if required fields are missing or invalid
  * @throws Error if text content exceeds layout constraints
- * @example
- * const pdfBytes = await generatePDF({
- *   date: new Date(),
- *   recipientAddress: '123 Main St',
- *   senderAddress: '456 Oak Ave',
- *   subject: 'Invoice',
- *   message: 'Dear Customer...',
- *   returnInfo: 'Return to Sender'
- * });
  */
 export async function generatePDF(data: PdfData): Promise<Uint8Array> {
-  // Validate required fields
-  const requiredFields: (keyof PdfData)[] = [
-    "date",
-    "recipientAddress",
-    "senderAddress",
-    "subject",
-    "message",
-    "returnInfo",
-  ];
-
-  for (const field of requiredFields) {
-    if (data[field] === undefined) {
-      throw new Error(`Missing required field: ${field}`);
-    }
-  }
+  // Validate input using the zod schema so types and cross-field rules are enforced
+  const parsed = pdfDataSchema.parse(data);
 
   try {
     const pdfDoc = await PDFDocument.create();
@@ -56,7 +34,7 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
       subject,
       message,
       returnInfo,
-    } = data;
+    } = parsed;
 
     const contentPages = paginateContent(
       message,
@@ -65,9 +43,8 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
       layout,
     );
 
-    const formattedDate = (
-      date ? new Date(date) : new Date()
-    ).toLocaleDateString("de-DE", {
+    // date has been validated by zod; Date.parse should be safe
+    const formattedDate = new Date(date).toLocaleDateString("de-DE", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -148,7 +125,6 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
     const totalPages = pdfDoc.getPageCount();
     pdfDoc.getPages().forEach((page, i) => {
       const text = `Seite ${i + 1} von ${totalPages}`;
-      // const text = `Page ${i + 1} of ${totalPages}`;
       renderPageNumber(page, font, text);
     });
 
