@@ -1,16 +1,24 @@
 import { z } from "zod";
 
-export const pdfDataSchema = z.object({
-  senderAddress: z.string().min(1, { message: "Sender address is required" }),
-  subject: z.string().min(1, { message: "Subject is required" }),
-  message: z.string().min(1, { message: "Message is required" }),
-  date: z
-    .string()
-    .refine((s) => !isNaN(Date.parse(s)), { message: "Invalid date" })
-    .optional(),
-  recipientAddress: z.string().optional(),
-  returnInfo: z.string().optional(),
-});
+export const pdfDataSchema = z
+  .object({
+    senderAddress: z.string().min(1, { message: "Sender address is required" }),
+    subject: z.string().min(1, { message: "Subject is required" }),
+    message: z.string().min(1, { message: "Message is required" }),
+    date: z.string().refine((s) => !isNaN(Date.parse(s)), { message: "Invalid date" }),
+    recipientAddress: z.string().optional(),
+    returnInfo: z.string().optional(),
+    useReadyStamp: z.boolean().optional(),
+  })
+  .superRefine((obj, ctx) => {
+    if (!obj.useReadyStamp && (!obj.recipientAddress || obj.recipientAddress.trim() === "")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Recipient address is required when useReadyStamp is false",
+        path: ["recipientAddress"],
+      });
+    }
+  });
 
 export type PdfData = z.infer<typeof pdfDataSchema>;
 
