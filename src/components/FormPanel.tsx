@@ -93,29 +93,29 @@ export default function FormPanel() {
             label="Use Deutsche Post ready stamp (contains recipient address)"
           />
 
-          {useReadyStamp && <StampInfo />}
-
-          {!useReadyStamp && (
-            <AddressField
-              label="Recipient address"
-              name="recipientAddress"
-              placeholder={`Musterfirma GmbH
-Musterstraße 1
-12345 Musterstadt`}
-            />
+          {useReadyStamp ? (
+            <>
+              <StampInfo />
+              <input type="hidden" name="useReadyStamp" value="on" />
+            </>
+          ) : (
+            <>
+              <AddressField
+                label="Recipient address"
+                name="recipientAddress"
+                placeholder={`Musterfirma GmbH
+              Musterstraße 1
+              12345 Musterstadt`}
+              />
+              <Textarea
+                className="resize-none"
+                label="Return information"
+                name="returnInfo"
+                rows={3}
+                placeholder={`Max Mustermann, Musterstraße 12, 12345 Berlin`}
+              />
+            </>
           )}
-
-          {useReadyStamp && (
-            <input type="hidden" name="useReadyStamp" value="on" />
-          )}
-
-          <Textarea
-            className="resize-none"
-            label="Return information"
-            name="returnInfo"
-            rows={3}
-            placeholder={`Max Mustermann, Musterstraße 12, 12345 Berlin`}
-          />
         </div>
         <div className="space-y-4">
           <AddressField
