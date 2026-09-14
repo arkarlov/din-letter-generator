@@ -104,13 +104,14 @@ export default function FormPanel() {
                 label="Recipient address"
                 name="recipientAddress"
                 placeholder={`Musterfirma GmbH
-              Musterstraße 1
-              12345 Musterstadt`}
+Musterstraße 1
+12345 Musterstadt`}
+                required
               />
               <Textarea
                 className="resize-none"
-                label="Return information"
-                name="returnInfo"
+                label="Sender address"
+                name="senderAddress"
                 rows={3}
                 placeholder={`Max Mustermann, Musterstraße 12, 12345 Berlin`}
               />
@@ -120,7 +121,7 @@ export default function FormPanel() {
         <div className="space-y-4">
           <AddressField
             label="Sender information"
-            name="senderAddress"
+            name="senderInfo"
             placeholder={`Max Mustermann
 Musterstraße 12
 12345 Berlin`}
@@ -137,8 +138,8 @@ Musterstraße 12
         </div>
       </div>
 
-      <Input label="Subject" name="subject" required />
-      <Textarea label="Message" name="message" rows={8} required />
+      <Textarea label="Subject" name="subject" rows={1} required />
+      <Textarea label="Message" name="message" rows={16} required />
 
       <button
         type="submit"

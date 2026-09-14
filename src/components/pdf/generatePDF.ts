@@ -5,6 +5,7 @@ import {
   renderTextBlock,
   renderTextLines,
   paginateContent,
+  renderGrid,
 } from "./utils";
 import { PdfData, pdfDataSchema } from "./types";
 import { LAYOUT_FONT, LAYOUTS } from "./config";
@@ -25,15 +26,15 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    const layout = LAYOUTS["A"];
+    const layout = LAYOUTS["B"];
 
     const {
       date,
       recipientAddress,
-      senderAddress,
+      senderInfo,
       subject,
       message,
-      returnInfo,
+      senderAddress,
     } = parsed;
 
     const contentPages = paginateContent(
@@ -67,13 +68,13 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
       renderFoldMarks(page, layout.foldMarks);
 
       if (isFirstPage) {
-        if (returnInfo) {
+        if (senderAddress) {
           renderTextBlock(
-            returnInfo,
+            senderAddress,
             page,
-            layout.returnInfo,
+            layout.sender,
             font,
-            LAYOUT_FONT.returnInfo,
+            LAYOUT_FONT.sender,
             "bottom-up",
           );
         }
@@ -81,19 +82,13 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
           renderTextBlock(
             recipientAddress,
             page,
-            layout.address,
+            layout.recipient,
             font,
-            LAYOUT_FONT.address,
+            LAYOUT_FONT.recipient,
             "bottom-up",
           );
         }
-        renderTextBlock(
-          senderAddress,
-          page,
-          layout.info,
-          font,
-          LAYOUT_FONT.info,
-        );
+        renderTextBlock(senderInfo, page, layout.info, font, LAYOUT_FONT.info);
         renderTextBlock(
           formattedDate,
           page,

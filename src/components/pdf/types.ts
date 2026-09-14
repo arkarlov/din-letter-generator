@@ -2,18 +2,23 @@ import { z } from "zod";
 
 export const pdfDataSchema = z
   .object({
-    senderAddress: z.string().min(1, { message: "Sender address is required" }),
+    senderInfo: z.string().min(1, { message: "Sender address is required" }),
     subject: z.string().min(1, { message: "Subject is required" }),
     message: z.string().min(1, { message: "Message is required" }),
-    date: z.string().refine((s) => !isNaN(Date.parse(s)), { message: "Invalid date" }),
+    date: z
+      .string()
+      .refine((s) => !isNaN(Date.parse(s)), { message: "Invalid date" }),
     recipientAddress: z.string().optional(),
-    returnInfo: z.string().optional(),
+    senderAddress: z.string().optional(),
     useReadyStamp: z.boolean().optional(),
   })
   .superRefine((obj, ctx) => {
-    if (!obj.useReadyStamp && (!obj.recipientAddress || obj.recipientAddress.trim() === "")) {
+    if (
+      !obj.useReadyStamp &&
+      (!obj.recipientAddress || obj.recipientAddress.trim() === "")
+    ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Recipient address is required when useReadyStamp is false",
         path: ["recipientAddress"],
       });
@@ -31,8 +36,8 @@ export type BlockZone = {
 export type FontOptions = { size: number; lineHeight: number };
 
 export type TextLayout = {
-  returnInfo: BlockZone;
-  address: BlockZone;
+  sender: BlockZone;
+  recipient: BlockZone;
   info: BlockZone;
   date: BlockZone;
   subject: BlockZone;

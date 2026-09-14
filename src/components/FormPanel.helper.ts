@@ -49,9 +49,9 @@ export const parseFormData = (formData: FormData): PdfData => {
     throw new Error("Date is required");
   }
 
-  const senderAddress = getStringValue(formData, "senderAddress");
-  if (!senderAddress && !isDev) {
-    throw new Error("Sender address is required");
+  const senderInfo = getStringValue(formData, "senderInfo");
+  if (!senderInfo && !isDev) {
+    throw new Error("Sender info is required");
   }
 
   const recipientAddress = useReadyStamp
@@ -62,18 +62,18 @@ export const parseFormData = (formData: FormData): PdfData => {
     throw new Error("Recipient address is required when not using ready stamp");
   }
 
-  const returnInfo = getStringValue(formData, "returnInfo");
+  const senderAddress = getStringValue(formData, "senderAddress");
 
   // In development, fall back to debug constants to make it easier to iterate locally.
   const payload: PdfData = {
     useReadyStamp,
     recipientAddress:
       recipientAddress || (isDev ? DEBUG_RECIPIENT_ADDRESS : undefined),
-    senderAddress: senderAddress || (isDev ? DEBUG_SENDER_ADDRESS : ""),
+    senderInfo: senderInfo || (isDev ? DEBUG_SENDER_ADDRESS : ""),
     subject,
     message,
     date,
-    returnInfo: returnInfo || (isDev ? DEBUG_RETURN_INFO : ""),
+    senderAddress: senderAddress || (isDev ? DEBUG_RETURN_INFO : ""),
   };
 
   return payload;

@@ -284,7 +284,7 @@ export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
     },
     end: {
       x: mmToPt(105),
-      y: page.getSize().height - mmToPt(layout.address.y + 27.3),
+      y: page.getSize().height - mmToPt(layout.recipient.y + 27.3),
     },
     thickness: 1,
   });
@@ -292,11 +292,11 @@ export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
   page.drawLine({
     start: {
       x: mmToPt(25),
-      y: page.getSize().height - mmToPt(layout.address.y + 27.3),
+      y: page.getSize().height - mmToPt(layout.recipient.y + 27.3),
     },
     end: {
       x: mmToPt(105),
-      y: page.getSize().height - mmToPt(layout.address.y + 27.3),
+      y: page.getSize().height - mmToPt(layout.recipient.y + 27.3),
     },
     thickness: 1,
   });
@@ -304,11 +304,11 @@ export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
   page.drawLine({
     start: {
       x: mmToPt(25),
-      y: page.getSize().height - mmToPt(layout.address.y),
+      y: page.getSize().height - mmToPt(layout.recipient.y + 27.3),
     },
     end: {
       x: mmToPt(105),
-      y: page.getSize().height - mmToPt(layout.address.y),
+      y: page.getSize().height - mmToPt(layout.recipient.y + 27.3),
     },
     thickness: 1,
   });

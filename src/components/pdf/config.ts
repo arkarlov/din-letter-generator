@@ -3,13 +3,13 @@ import type { FontLayout, Layout, LetterType } from "./types";
 export const LAYOUTS: Record<LetterType, Layout> = {
   A: {
     letterheadHeight: 27,
-    returnInfo: {
+    sender: {
       x: 25,
       y: 27,
       width: 80,
       height: 17.7,
     },
-    address: {
+    recipient: {
       x: 25,
       y: 44.7,
       width: 80,
@@ -40,13 +40,13 @@ export const LAYOUTS: Record<LetterType, Layout> = {
   },
   B: {
     letterheadHeight: 45,
-    returnInfo: {
+    sender: {
       x: 25,
       y: 45,
       width: 80,
       height: 17.7,
     },
-    address: {
+    recipient: {
       x: 25,
       y: 62.7,
       width: 80,
@@ -78,10 +78,10 @@ export const LAYOUTS: Record<LetterType, Layout> = {
 };
 
 export const LAYOUT_FONT: FontLayout = {
-  returnInfo: { size: 8, lineHeight: 1 },
-  address: { size: 10, lineHeight: 1.1 },
+  sender: { size: 8, lineHeight: 1 },
+  recipient: { size: 10, lineHeight: 1.1 },
   info: { size: 11, lineHeight: 1.15 },
   date: { size: 11, lineHeight: 1 },
-  subject: { size: 12, lineHeight: 1 },
-  content: { size: 12, lineHeight: 1.5 },
+  subject: { size: 11, lineHeight: 1.2 },
+  content: { size: 11, lineHeight: 1.5 },
 };
