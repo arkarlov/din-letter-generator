@@ -78,7 +78,7 @@ export const LAYOUTS: Record<LetterType, Layout> = {
 };
 
 export const LAYOUT_FONT: FontLayout = {
-  sender: { size: 8, lineHeight: 1 },
+  sender: { size: 7, lineHeight: 1 },
   recipient: { size: 10, lineHeight: 1.1 },
   info: { size: 11, lineHeight: 1.15 },
   date: { size: 11, lineHeight: 1 },
