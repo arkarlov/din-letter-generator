@@ -1,87 +1,94 @@
-import type { FontLayout, Layout, LetterType } from "./types";
+import type { FontLayout, Layout, LetterType, MmBlockZone } from "./types";
 
-export const LAYOUTS: Record<LetterType, Layout> = {
-  A: {
-    letterheadHeight: 27,
-    sender: {
-      x: 25,
-      y: 27,
-      width: 80,
-      height: 17.7,
-    },
-    recipient: {
-      x: 25,
-      y: 44.7,
-      width: 80,
-      height: 27.3,
-    },
-    info: {
-      x: 125,
-      y: 32,
-      width: 75,
-      height: 45,
-    },
-    date: {
-      x: 125,
-      y: 80,
-      width: 75,
-    },
-    subject: {
-      x: 25,
-      y: 90,
-      width: 165,
-    },
-    content: {
-      x: 25,
-      y: 110,
-      width: 165,
-    },
-    foldMarks: [87, 192],
-  },
-  B: {
-    letterheadHeight: 45,
-    sender: {
-      x: 25,
-      y: 45,
-      width: 80,
-      height: 17.7,
-    },
-    recipient: {
-      x: 25,
-      y: 62.7,
-      width: 80,
-      height: 27.3,
-    },
-    info: {
-      x: 125,
-      y: 50,
-      width: 75,
-      height: 45,
-    },
-    date: {
-      x: 125,
-      y: 98,
-      width: 75,
-    },
-    subject: {
-      x: 25,
-      y: 106,
-      width: 165,
-    },
-    content: {
-      x: 25,
-      y: 125,
-      width: 165,
-    },
-    foldMarks: [105, 210],
-  },
+const PAGE = {
+  leftMarginMm: 25,
+  rightColumnXMm: 125,
+  leftColumnWidthMm: 80,
+  rightColumnWidthMm: 75,
+  contentWidthMm: 165,
+} as const;
+
+const BODY = {
+  senderHeightMm: 17.7,
+  recipientHeightMm: 27.3,
+  infoTopOffsetMm: 5,
+  infoHeightMm: 45,
+  dateTopOffsetMm: 53,
+  foldMarksOffsetsMm: [60, 165],
+  // B previously used 106/125 mm for these anchors; keep the discrepancy
+  // noted while the zero-header translation is investigated.
+  subjectTopMm: 63,
+  contentTopMm: 83,
+} as const;
+
+const zone = ({
+  xMm,
+  yMm,
+  widthMm,
+  heightMm,
+}: MmBlockZone): MmBlockZone => ({
+  xMm,
+  yMm,
+  widthMm,
+  ...(heightMm === undefined ? {} : { heightMm }),
+});
+
+const createLayoutForHeader = (letterheadHeightMm: number): Layout => {
+  return {
+    letterheadHeightMm,
+    sender: zone({
+      xMm: PAGE.leftMarginMm,
+      yMm: letterheadHeightMm,
+      widthMm: PAGE.leftColumnWidthMm,
+      heightMm: BODY.senderHeightMm,
+    }),
+    recipient: zone({
+      xMm: PAGE.leftMarginMm,
+      yMm: letterheadHeightMm + BODY.senderHeightMm,
+      widthMm: PAGE.leftColumnWidthMm,
+      heightMm: BODY.recipientHeightMm,
+    }),
+    info: zone({
+      xMm: PAGE.rightColumnXMm,
+      yMm: letterheadHeightMm + BODY.infoTopOffsetMm,
+      widthMm: PAGE.rightColumnWidthMm,
+      heightMm: BODY.infoHeightMm,
+    }),
+    date: zone({
+      xMm: PAGE.rightColumnXMm,
+      yMm: letterheadHeightMm + BODY.dateTopOffsetMm,
+      widthMm: PAGE.rightColumnWidthMm,
+    }),
+    subject: zone({
+      xMm: PAGE.leftMarginMm,
+      yMm: BODY.subjectTopMm + letterheadHeightMm,
+      widthMm: PAGE.contentWidthMm,
+    }),
+    content: zone({
+      xMm: PAGE.leftMarginMm,
+      yMm: BODY.contentTopMm + letterheadHeightMm,
+      widthMm: PAGE.contentWidthMm,
+    }),
+    foldMarksMm: BODY.foldMarksOffsetsMm.map(
+      (offsetMm) => letterheadHeightMm + offsetMm,
+    ),
+  };
 };
 
-export const LAYOUT_FONT: FontLayout = {
+export const createLayout = (letterType: LetterType): Layout => {
+  switch (letterType) {
+    case "A":
+      return createLayoutForHeader(27);
+    case "B":
+      return createLayoutForHeader(45);
+  }
+};
+
+export const LAYOUT_FONT = {
   sender: { size: 7, lineHeight: 1 },
   recipient: { size: 10, lineHeight: 1.1 },
   info: { size: 11, lineHeight: 1.15 },
   date: { size: 11, lineHeight: 1 },
   subject: { size: 11, lineHeight: 1.2 },
   content: { size: 11, lineHeight: 1.5 },
-};
+} satisfies FontLayout;

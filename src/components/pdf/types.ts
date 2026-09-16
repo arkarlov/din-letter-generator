@@ -27,28 +27,29 @@ export const pdfDataSchema = z
 
 export type PdfData = z.infer<typeof pdfDataSchema>;
 
-export type BlockZone = {
-  x: number;
-  y: number;
-  width: number;
-  height?: number;
+export type MmBlockZone = {
+  xMm: number;
+  yMm: number;
+  widthMm: number;
+  heightMm?: number;
 };
+
 export type FontOptions = { size: number; lineHeight: number };
 
 export type TextLayout = {
-  sender: BlockZone;
-  recipient: BlockZone;
-  info: BlockZone;
-  date: BlockZone;
-  subject: BlockZone;
-  content: BlockZone;
+  sender: MmBlockZone;
+  recipient: MmBlockZone;
+  info: MmBlockZone;
+  date: MmBlockZone;
+  subject: MmBlockZone;
+  content: MmBlockZone;
 };
 export type FontLayout = {
   [K in keyof TextLayout]: FontOptions;
 };
 export type Layout = TextLayout & {
-  letterheadHeight: number;
-  foldMarks: number[];
+  letterheadHeightMm: number;
+  foldMarksMm: readonly number[];
 };
 
 export type LetterType = "A" | "B";

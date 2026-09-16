@@ -5,10 +5,9 @@ import {
   PDFPageDrawTextOptions,
 } from "pdf-lib";
 import {
-  BlockZone,
   FontOptions,
   Layout,
-  TextLayout,
+  MmBlockZone,
   VerticalDirection,
 } from "./types";
 
@@ -34,7 +33,7 @@ function getLayoutTextLines(
   text: string,
   font: PDFFont,
   fontSize: number,
-  maxWidthMM: number,
+  maxWidthMm: number,
 ) {
   const paragraphs = text.split(/\r?\n/);
 
@@ -53,9 +52,7 @@ function getLayoutTextLines(
       const testLine = currentLine ? `${currentLine} ${word}` : word;
       const width = font.widthOfTextAtSize(testLine, fontSize);
 
-      const maxWidthPt = mmToPt(maxWidthMM);
-
-      if (width <= maxWidthPt) {
+      if (width <= mmToPt(maxWidthMm)) {
         currentLine = testLine;
       } else {
         if (currentLine) lines.push(currentLine);
@@ -71,7 +68,7 @@ function getLayoutTextLines(
 
 export function renderTextLines(
   page: PDFPage,
-  layout: BlockZone,
+  layout: MmBlockZone,
   font: PDFFont,
   lines: string[],
   fontSize: number,
@@ -79,21 +76,24 @@ export function renderTextLines(
 ) {
   lines.forEach((line, index) => {
     drawPageText(page, line, {
-      x: mmToPt(layout.x),
-      y: mmToPt(layout.y) + index * lineHeightPt,
-      maxWidth: mmToPt(layout.width),
+      x: mmToPt(layout.xMm),
+      y: mmToPt(layout.yMm) + index * lineHeightPt,
+      maxWidth: mmToPt(layout.widthMm),
       font,
       size: fontSize,
     });
   });
 }
 
-export function renderFoldMarks(page: PDFPage, layout: Layout["foldMarks"]) {
+export function renderFoldMarks(
+  page: PDFPage,
+  foldMarksMm: Layout["foldMarksMm"],
+) {
   const { height } = page.getSize();
   const color = grayscale(0.7);
   const hole = height / 2;
 
-  layout.forEach((mm) => {
+  foldMarksMm.forEach((mm) => {
     const y = height - mmToPt(mm);
     page.drawLine({
       start: { x: mmToPt(5), y },
@@ -131,31 +131,31 @@ export function renderPageNumber(page: PDFPage, font: PDFFont, text: string) {
 export function renderTextBlock(
   text: string,
   page: PDFPage,
-  layout: BlockZone,
+  layout: MmBlockZone,
   font: PDFFont,
   fontOptions: FontOptions,
   direction: VerticalDirection = "top-down",
 ) {
   const { size, lineHeight } = fontOptions;
 
-  const lines = getLayoutTextLines(text, font, size, layout.width);
+  const lines = getLayoutTextLines(text, font, size, layout.widthMm);
 
   const lineHeightPt = size * lineHeight;
   const totalHeightMm = lines.length * ptToMM(lineHeightPt);
 
-  if (layout.height && totalHeightMm > layout.height) {
+  if (layout.heightMm && totalHeightMm > layout.heightMm) {
     throw new Error("Return info exceeds allowed height");
   }
 
-  let startYmm = layout.y;
+  let startYmm = layout.yMm;
 
-  if (layout.height && direction === "bottom-up") {
-    startYmm = layout.y + (layout.height - totalHeightMm);
+  if (layout.heightMm && direction === "bottom-up") {
+    startYmm = layout.yMm + (layout.heightMm - totalHeightMm);
   }
 
   renderTextLines(
     page,
-    { ...layout, y: startYmm },
+    { ...layout, yMm: startYmm },
     font,
     lines,
     size,
@@ -196,14 +196,14 @@ export const paginateContent = (
     content,
     font,
     fontOptions.size,
-    layout.content.width,
+    layout.content.widthMm,
   );
   const lineHeightPt = fontOptions.size * fontOptions.lineHeight;
 
-  const firstPageHeightPt = getPageHeightPt(layout.content.y);
+  const firstPageHeightPt = getPageHeightPt(layout.content.yMm);
   const firstPageMaxLines = Math.floor(firstPageHeightPt / lineHeightPt);
 
-  const nextPageHeightPt = getPageHeightPt(layout.letterheadHeight);
+  const nextPageHeightPt = getPageHeightPt(layout.letterheadHeightMm);
   const nextPageMaxLines = Math.floor(nextPageHeightPt / lineHeightPt);
 
   return paginateTextLines({
@@ -216,7 +216,7 @@ export const paginateContent = (
 export const getPageHeightPt = (topMm: number, bottomMm: number = 25) =>
   mmToPt(297 - topMm - bottomMm);
 
-export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
+export const renderGrid = (page: PDFPage, layout: Layout) => {
   // frame 5mm
   page.drawRectangle({
     x: mmToPt(5),
@@ -230,19 +230,22 @@ export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
 
   // header
   page.drawLine({
-    start: { x: 0, y: page.getSize().height - mmToPt(layout.letterheadHeight) },
+    start: {
+      x: 0,
+      y: page.getSize().height - mmToPt(layout.letterheadHeightMm),
+    },
     end: {
       x: page.getSize().width,
-      y: page.getSize().height - mmToPt(layout.letterheadHeight),
+      y: page.getSize().height - mmToPt(layout.letterheadHeightMm),
     },
     thickness: 1,
   });
   // content
   page.drawLine({
-    start: { x: 0, y: page.getSize().height - mmToPt(layout.subject.y) },
+    start: { x: 0, y: page.getSize().height - mmToPt(layout.subject.yMm) },
     end: {
       x: page.getSize().width,
-      y: page.getSize().height - mmToPt(layout.subject.y),
+      y: page.getSize().height - mmToPt(layout.subject.yMm),
     },
     thickness: 1,
   });
@@ -280,11 +283,12 @@ export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
   page.drawLine({
     start: {
       x: mmToPt(105),
-      y: page.getSize().height - mmToPt(layout.letterheadHeight),
+      y: page.getSize().height - mmToPt(layout.letterheadHeightMm),
     },
     end: {
       x: mmToPt(105),
-      y: page.getSize().height - mmToPt(layout.recipient.y + 27.3),
+      y: page.getSize().height -
+        mmToPt(layout.recipient.yMm + (layout.recipient.heightMm ?? 0)),
     },
     thickness: 1,
   });
@@ -292,11 +296,13 @@ export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
   page.drawLine({
     start: {
       x: mmToPt(25),
-      y: page.getSize().height - mmToPt(layout.recipient.y + 27.3),
+      y: page.getSize().height -
+        mmToPt(layout.recipient.yMm + (layout.recipient.heightMm ?? 0)),
     },
     end: {
       x: mmToPt(105),
-      y: page.getSize().height - mmToPt(layout.recipient.y + 27.3),
+      y: page.getSize().height -
+        mmToPt(layout.recipient.yMm + (layout.recipient.heightMm ?? 0)),
     },
     thickness: 1,
   });
@@ -304,29 +310,37 @@ export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
   page.drawLine({
     start: {
       x: mmToPt(25),
-      y: page.getSize().height - mmToPt(layout.recipient.y + 27.3),
+      y: page.getSize().height -
+        mmToPt(layout.recipient.yMm + (layout.recipient.heightMm ?? 0)),
     },
     end: {
       x: mmToPt(105),
-      y: page.getSize().height - mmToPt(layout.recipient.y + 27.3),
+      y: page.getSize().height -
+        mmToPt(layout.recipient.yMm + (layout.recipient.heightMm ?? 0)),
     },
     thickness: 1,
   });
   // info-left
   page.drawLine({
-    start: { x: mmToPt(125), y: page.getSize().height - mmToPt(layout.info.y) },
+    start: {
+      x: mmToPt(125),
+      y: page.getSize().height - mmToPt(layout.info.yMm),
+    },
     end: {
       x: mmToPt(125),
-      y: page.getSize().height - mmToPt(layout.subject.y),
+      y: page.getSize().height - mmToPt(layout.subject.yMm),
     },
     thickness: 1,
   });
   // info-top
   page.drawLine({
-    start: { x: mmToPt(125), y: page.getSize().height - mmToPt(layout.info.y) },
+    start: {
+      x: mmToPt(125),
+      y: page.getSize().height - mmToPt(layout.info.yMm),
+    },
     end: {
       x: page.getSize().width - mmToPt(10),
-      y: page.getSize().height - mmToPt(layout.info.y),
+      y: page.getSize().height - mmToPt(layout.info.yMm),
     },
     thickness: 1,
   });
@@ -334,11 +348,11 @@ export const renderGrid = (page: PDFPage, layout: TextLayout & Layout) => {
   page.drawLine({
     start: {
       x: mmToPt(125),
-      y: page.getSize().height - mmToPt(layout.subject.y),
+      y: page.getSize().height - mmToPt(layout.subject.yMm),
     },
     end: {
       x: page.getSize().width - mmToPt(10),
-      y: page.getSize().height - mmToPt(layout.subject.y),
+      y: page.getSize().height - mmToPt(layout.subject.yMm),
     },
     thickness: 1,
   });

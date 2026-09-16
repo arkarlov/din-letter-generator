@@ -5,10 +5,9 @@ import {
   renderTextBlock,
   renderTextLines,
   paginateContent,
-  renderGrid,
 } from "./utils";
 import { PdfData, pdfDataSchema } from "./types";
-import { LAYOUT_FONT, LAYOUTS } from "./config";
+import { createLayout, LAYOUT_FONT } from "./config";
 
 /**
  * Generate a PDF document with letter content
@@ -26,7 +25,7 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    const layout = LAYOUTS["B"];
+    const layout = createLayout("B");
 
     const {
       date,
@@ -65,7 +64,7 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
       // debug
       // renderGrid(page, layout);
 
-      renderFoldMarks(page, layout.foldMarks);
+      renderFoldMarks(page, layout.foldMarksMm);
 
       if (isFirstPage) {
         if (senderAddress) {
@@ -109,7 +108,7 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
         page,
         isFirstPage
           ? layout.content
-          : { ...layout.content, y: layout.letterheadHeight },
+          : { ...layout.content, yMm: layout.letterheadHeightMm },
         font,
         content,
         LAYOUT_FONT.content.size,
