@@ -110,8 +110,8 @@ Musterstraße 1
               />
               <Textarea
                 className="resize-none"
-                label="Sender address"
-                name="senderAddress"
+                label="Return address"
+                name="returnAddress"
                 rows={3}
                 placeholder={`Max Mustermann, Musterstraße 12, 12345 Berlin`}
               />
@@ -120,8 +120,8 @@ Musterstraße 1
         </div>
         <div className="space-y-4">
           <AddressField
-            label="Sender information"
-            name="senderInfo"
+            label="Info block"
+            name="infoBlock"
             placeholder={`Max Mustermann
 Musterstraße 12
 12345 Berlin`}

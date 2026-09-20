@@ -1,13 +1,12 @@
-import { PDFDocument, PageSizes, StandardFonts, rgb } from "pdf-lib";
-import {
-  renderPageNumber,
-  renderFoldMarks,
-  renderTextBlock,
-  renderTextLines,
-  paginateContent,
-} from "./utils";
+import { PDFDocument, PageSizes, StandardFonts } from "pdf-lib";
+import { paginateContent } from "./utils";
 import { PdfData, pdfDataSchema } from "./types";
 import { createLayout, LAYOUT_FONT } from "./config";
+import {
+  formatLetterDate,
+  renderLetterPage,
+  renderPageNumbers,
+} from "./helpers";
 
 /**
  * Generate a PDF document with letter content
@@ -30,10 +29,10 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
     const {
       date,
       recipientAddress,
-      senderInfo,
+      infoBlock,
       subject,
       message,
-      senderAddress,
+      returnAddress,
     } = parsed;
 
     const contentPages = paginateContent(
@@ -43,84 +42,28 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
       layout,
     );
 
-    // date has been validated by zod; Date.parse should be safe
-    const formattedDate = new Date(date).toLocaleDateString("de-DE", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    const formattedDate = formatLetterDate(date);
 
     contentPages.forEach((content, i) => {
       const isFirstPage = i === 0;
 
       const page = pdfDoc.addPage(PageSizes.A4);
-      page.setFont(font);
-      page.setFontSize(LAYOUT_FONT.content.size);
-      page.setLineHeight(
-        LAYOUT_FONT.content.size * LAYOUT_FONT.content.lineHeight,
-      );
-      page.setFontColor(rgb(0, 0, 0));
-
-      // debug
-      // renderGrid(page, layout);
-
-      renderFoldMarks(page, layout.foldMarksMm);
-
-      if (isFirstPage) {
-        if (senderAddress) {
-          renderTextBlock(
-            senderAddress,
-            page,
-            layout.sender,
-            font,
-            LAYOUT_FONT.sender,
-            "bottom-up",
-          );
-        }
-        if (recipientAddress) {
-          renderTextBlock(
-            recipientAddress,
-            page,
-            layout.recipient,
-            font,
-            LAYOUT_FONT.recipient,
-            "bottom-up",
-          );
-        }
-        renderTextBlock(senderInfo, page, layout.info, font, LAYOUT_FONT.info);
-        renderTextBlock(
-          formattedDate,
-          page,
-          layout.date,
-          font,
-          LAYOUT_FONT.date,
-        );
-        renderTextBlock(
-          subject,
-          page,
-          layout.subject,
-          fontBold,
-          LAYOUT_FONT.subject,
-        );
-      }
-
-      renderTextLines(
+      renderLetterPage({
         page,
-        isFirstPage
-          ? layout.content
-          : { ...layout.content, yMm: layout.letterheadHeightMm },
+        layout,
         font,
+        fontBold,
         content,
-        LAYOUT_FONT.content.size,
-        LAYOUT_FONT.content.size * LAYOUT_FONT.content.lineHeight,
-      );
+        isFirstPage,
+        returnAddress,
+        recipientAddress,
+        infoBlock,
+        formattedDate,
+        subject,
+      });
     });
 
-    const totalPages = pdfDoc.getPageCount();
-    pdfDoc.getPages().forEach((page, i) => {
-      const text = `Seite ${i + 1} von ${totalPages}`;
-      renderPageNumber(page, font, text);
-    });
+    renderPageNumbers(pdfDoc, font);
 
     const pdfBytes = await pdfDoc.save();
 

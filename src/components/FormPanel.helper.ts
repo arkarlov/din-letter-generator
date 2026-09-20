@@ -5,7 +5,7 @@ Company Ltd.
 Business Street 5
 54321 Munich`;
 
-const DEBUG_SENDER_ADDRESS = `Personal N:
+const DEBUG_INFO_BLOCK = `Personal N:
 8837789
 
 John Doe
@@ -16,7 +16,7 @@ Example Street 12
 Tel: +492341232515
 e-mail: john@example.com`;
 
-const DEBUG_RETURN_INFO = "John Doe, Example Street 12, 12345 Berlin";
+const DEBUG_RETURN_ADDRESS = "John Doe, Example Street 12, 12345 Berlin";
 
 const isDev =
   typeof process !== "undefined" &&
@@ -49,9 +49,9 @@ export const parseFormData = (formData: FormData): PdfData => {
     throw new Error("Date is required");
   }
 
-  const senderInfo = getStringValue(formData, "senderInfo");
-  if (!senderInfo && !isDev) {
-    throw new Error("Sender info is required");
+  const infoBlock = getStringValue(formData, "infoBlock");
+  if (!infoBlock && !isDev) {
+    throw new Error("Info block is required");
   }
 
   const recipientAddress = useReadyStamp
@@ -62,18 +62,18 @@ export const parseFormData = (formData: FormData): PdfData => {
     throw new Error("Recipient address is required when not using ready stamp");
   }
 
-  const senderAddress = getStringValue(formData, "senderAddress");
+  const returnAddress = getStringValue(formData, "returnAddress");
 
   // In development, fall back to debug constants to make it easier to iterate locally.
   const payload: PdfData = {
     useReadyStamp,
     recipientAddress:
       recipientAddress || (isDev ? DEBUG_RECIPIENT_ADDRESS : undefined),
-    senderInfo: senderInfo || (isDev ? DEBUG_SENDER_ADDRESS : ""),
+    infoBlock: infoBlock || (isDev ? DEBUG_INFO_BLOCK : ""),
     subject,
     message,
     date,
-    senderAddress: senderAddress || (isDev ? DEBUG_RETURN_INFO : ""),
+    returnAddress: returnAddress || (isDev ? DEBUG_RETURN_ADDRESS : ""),
   };
 
   return payload;

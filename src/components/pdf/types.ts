@@ -2,14 +2,14 @@ import { z } from "zod";
 
 export const pdfDataSchema = z
   .object({
-    senderInfo: z.string().min(1, { message: "Sender address is required" }),
+    infoBlock: z.string().min(1, { message: "Info block is required" }),
     subject: z.string().min(1, { message: "Subject is required" }),
     message: z.string().min(1, { message: "Message is required" }),
     date: z
       .string()
       .refine((s) => !isNaN(Date.parse(s)), { message: "Invalid date" }),
     recipientAddress: z.string().optional(),
-    senderAddress: z.string().optional(),
+    returnAddress: z.string().optional(),
     useReadyStamp: z.boolean().optional(),
   })
   .superRefine((obj, ctx) => {
