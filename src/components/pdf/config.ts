@@ -21,12 +21,7 @@ const BODY = {
   contentTopMm: 83,
 } as const;
 
-const zone = ({
-  xMm,
-  yMm,
-  widthMm,
-  heightMm,
-}: MmBlockZone): MmBlockZone => ({
+const zone = ({ xMm, yMm, widthMm, heightMm }: MmBlockZone): MmBlockZone => ({
   xMm,
   yMm,
   widthMm,

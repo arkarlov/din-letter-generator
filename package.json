@@ -1,12 +1,15 @@
 {
-  "name": "letter-layout-app",
+  "name": "din-letter-generator",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -17,13 +20,13 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.4",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^20.19.33",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.3",
-    "eslint-config-next": "15.5.2",
+    "eslint-config-next": "16.0.10",
+    "prettier": "^3.9.9",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"
   }

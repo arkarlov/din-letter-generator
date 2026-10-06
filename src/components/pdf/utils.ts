@@ -4,12 +4,7 @@ import {
   type PDFFont,
   PDFPageDrawTextOptions,
 } from "pdf-lib";
-import {
-  FontOptions,
-  Layout,
-  MmBlockZone,
-  VerticalDirection,
-} from "./types";
+import { FontOptions, Layout, MmBlockZone, VerticalDirection } from "./types";
 
 const mmToPt = (mm: number) => mm * 2.83465;
 const ptToMM = (pt: number) => pt / 2.83465;
@@ -287,7 +282,8 @@ export const renderGrid = (page: PDFPage, layout: Layout) => {
     },
     end: {
       x: mmToPt(105),
-      y: page.getSize().height -
+      y:
+        page.getSize().height -
         mmToPt(layout.recipient.yMm + (layout.recipient.heightMm ?? 0)),
     },
     thickness: 1,
@@ -296,12 +292,14 @@ export const renderGrid = (page: PDFPage, layout: Layout) => {
   page.drawLine({
     start: {
       x: mmToPt(25),
-      y: page.getSize().height -
+      y:
+        page.getSize().height -
         mmToPt(layout.recipient.yMm + (layout.recipient.heightMm ?? 0)),
     },
     end: {
       x: mmToPt(105),
-      y: page.getSize().height -
+      y:
+        page.getSize().height -
         mmToPt(layout.recipient.yMm + (layout.recipient.heightMm ?? 0)),
     },
     thickness: 1,
@@ -310,12 +308,14 @@ export const renderGrid = (page: PDFPage, layout: Layout) => {
   page.drawLine({
     start: {
       x: mmToPt(25),
-      y: page.getSize().height -
+      y:
+        page.getSize().height -
         mmToPt(layout.recipient.yMm + (layout.recipient.heightMm ?? 0)),
     },
     end: {
       x: mmToPt(105),
-      y: page.getSize().height -
+      y:
+        page.getSize().height -
         mmToPt(layout.recipient.yMm + (layout.recipient.heightMm ?? 0)),
     },
     thickness: 1,
