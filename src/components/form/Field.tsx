@@ -16,7 +16,15 @@ export function Field({ label, name, error, children, required }: FieldProps) {
 
       {children}
 
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error && (
+        <span
+          id={name ? `${name}-error` : undefined}
+          role="alert"
+          className="text-xs text-red-600"
+        >
+          {error}
+        </span>
+      )}
     </div>
   );
 }

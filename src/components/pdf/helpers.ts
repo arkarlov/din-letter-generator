@@ -49,9 +49,8 @@ export function renderLetterPage({
   page.setLineHeight(LAYOUT_FONT.content.size * LAYOUT_FONT.content.lineHeight);
   page.setFontColor(rgb(0, 0, 0));
 
-  renderFoldMarks(page, layout.foldMarksMm);
-
   if (isFirstPage) {
+    renderFoldMarks(page, layout.foldMarksMm);
     renderLetterHeader({
       page,
       layout,

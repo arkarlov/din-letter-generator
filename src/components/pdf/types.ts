@@ -1,16 +1,26 @@
 import { z } from "zod";
 
-export const pdfDataSchema = z
+const hasAtLeastTwoLines = (value: string) =>
+  value.split(/\r?\n/).filter((line) => line.trim()).length >= 2;
+
+const pdfDataObjectSchema = z
   .object({
-    infoBlock: z.string().min(1, { message: "Info block is required" }),
-    subject: z.string().min(1, { message: "Subject is required" }),
-    message: z.string().min(1, { message: "Message is required" }),
+    infoBlock: z
+      .string()
+      .trim()
+      .refine(hasAtLeastTwoLines, {
+        message: "Address must contain at least 2 lines.",
+      }),
+    subject: z.string().trim().min(1, { message: "Subject is required" }),
+    message: z.string().trim().min(1, { message: "Message is required" }),
     date: z
       .string()
+      .trim()
       .refine((s) => !isNaN(Date.parse(s)), { message: "Invalid date" }),
-    recipientAddress: z.string().optional(),
-    returnAddress: z.string().optional(),
+    recipientAddress: z.string().trim().optional(),
+    returnAddress: z.string().trim().optional(),
     useReadyStamp: z.boolean().optional(),
+    letterType: z.enum(["A", "B"]).default("B"),
   })
   .superRefine((obj, ctx) => {
     if (
@@ -22,8 +32,34 @@ export const pdfDataSchema = z
         message: "Recipient address is required when useReadyStamp is false",
         path: ["recipientAddress"],
       });
+    } else if (
+      !obj.useReadyStamp &&
+      obj.recipientAddress &&
+      !hasAtLeastTwoLines(obj.recipientAddress)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Address must contain at least 2 lines.",
+        path: ["recipientAddress"],
+      });
     }
   });
+
+export const pdfDataSchema = z.preprocess((input) => {
+  if (typeof FormData === "undefined" || !(input instanceof FormData)) {
+    return input;
+  }
+
+  const formValues: Record<string, FormDataEntryValue> = {};
+  input.forEach((value, key) => {
+    formValues[key] = value;
+  });
+
+  return {
+    ...formValues,
+    useReadyStamp: input.has("useReadyStamp"),
+  };
+}, pdfDataObjectSchema);
 
 export type PdfData = z.infer<typeof pdfDataSchema>;
 

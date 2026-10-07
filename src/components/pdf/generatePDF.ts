@@ -24,8 +24,6 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    const layout = createLayout("B");
-
     const {
       date,
       recipientAddress,
@@ -33,7 +31,10 @@ export async function generatePDF(data: PdfData): Promise<Uint8Array> {
       subject,
       message,
       returnAddress,
+      letterType,
     } = parsed;
+
+    const layout = createLayout(letterType);
 
     const contentPages = paginateContent(
       message,

@@ -17,6 +17,8 @@ export const Input = forwardRef<HTMLInputElement, Props>(
           ref={ref}
           id={name}
           name={name}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error && name ? `${name}-error` : undefined}
           className={clsx(
             "w-full rounded-lg border p-3 text-sm outline-none transition",
             error
