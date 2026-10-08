@@ -1,22 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { usePdfGenerator } from "@/hooks/usePdfGenerator";
-import { pdfDataSchema, type PdfData } from "./pdf/types";
-import { Input } from "./form/Input";
-import { Textarea } from "./form/Textarea";
+import { useGeneratePdf } from "@/hooks/usePdfGenerator";
+import { InputField } from "./form/InputField";
+import { TextareaField } from "./form/TextareaField";
 import { Switch } from "./form/Switch";
 import { StampInfo } from "./StampInfo";
+import { letterSchema, type LetterData } from "@/lib/letter/schema";
+import {
+  getLetterFieldErrors,
+  type LetterFieldErrors,
+} from "@/lib/letter/field-errors";
 
 export default function FormPanel() {
-  const { isLoading, error, generatePdf } = usePdfGenerator();
   const [useReadyStamp, setUseReadyStamp] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<
-    Partial<Record<keyof PdfData, string>>
-  >({});
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<LetterFieldErrors>({});
 
-  const clearFieldError = (field: keyof PdfData) => {
+  const { isLoading, generatePdf } = useGeneratePdf();
+
+  const clearFieldError = (field: keyof LetterData) => {
     setFieldErrors((current) => {
       if (!current[field]) return current;
       const next = { ...current };
@@ -28,24 +31,21 @@ export default function FormPanel() {
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    setError(null);
     try {
-      setFormError(null);
-      const result = pdfDataSchema.safeParse(formData);
+      const result = letterSchema.safeParse(formData);
+
       if (!result.success) {
-        const errors: Partial<Record<keyof PdfData, string>> = {};
-        for (const issue of result.error.issues) {
-          const field = issue.path[0];
-          if (typeof field === "string" && !errors[field as keyof PdfData]) {
-            errors[field as keyof PdfData] = issue.message;
-          }
-        }
-        setFieldErrors(errors);
+        setFieldErrors(getLetterFieldErrors(result.error));
         return;
       }
       setFieldErrors({});
+
       await generatePdf(result.data);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : String(err));
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred",
+      );
     }
   };
 
@@ -54,14 +54,13 @@ export default function FormPanel() {
       <h1 className="text-2xl font-bold">Create Letter</h1>
 
       {error && (
-        <div className="rounded-lg bg-red-50 p-4 border border-red-200">
+        <div
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          className="rounded-lg bg-red-50 p-4 border border-red-200"
+        >
           <p className="text-red-700 text-sm">{error}</p>
-        </div>
-      )}
-
-      {formError && (
-        <div className="rounded-lg bg-red-50 p-4 border border-red-200">
-          <p className="text-red-700 text-sm">{formError}</p>
         </div>
       )}
 
@@ -71,6 +70,7 @@ export default function FormPanel() {
             <div className="space-y-4">
               <Switch
                 checked={useReadyStamp}
+                name="useReadyStamp"
                 onChange={(checked) => {
                   setUseReadyStamp(checked);
                   clearFieldError("recipientAddress");
@@ -79,48 +79,45 @@ export default function FormPanel() {
               />
 
               {useReadyStamp ? (
-                <>
-                  <StampInfo />
-                  <input type="hidden" name="useReadyStamp" value="on" />
-                </>
+                <StampInfo />
               ) : (
                 <>
-                  <Textarea
+                  <TextareaField
                     className="resize-none"
                     label="Recipient address"
                     name="recipientAddress"
                     rows={5}
-                    placeholder={`Musterfirma GmbH
-Musterstraße 1
-12345 Musterstadt`}
+                    placeholder={
+                      "Musterfirma GmbH\nMusterstraße 1\n12345 Musterstadt"
+                    }
                     required
                     error={fieldErrors.recipientAddress}
                     onChange={() => clearFieldError("recipientAddress")}
                   />
-                  <Textarea
+                  <TextareaField
                     className="resize-none"
                     label="Return address"
                     name="returnAddress"
                     rows={3}
-                    placeholder={`Max Mustermann, Musterstraße 12, 12345 Berlin`}
+                    placeholder={
+                      "Max Mustermann, Musterstraße 12, 12345 Berlin"
+                    }
                   />
                 </>
               )}
             </div>
             <div className="space-y-4">
-              <Textarea
+              <TextareaField
                 className="resize-none"
                 label="Info block"
                 name="infoBlock"
                 rows={5}
-                placeholder={`Max Mustermann
-Musterstraße 12
-12345 Berlin`}
+                placeholder={"Max Mustermann\nMusterstraße 12\n12345 Berlin"}
                 required
                 error={fieldErrors.infoBlock}
                 onChange={() => clearFieldError("infoBlock")}
               />
-              <Input
+              <InputField
                 label="Date"
                 name="date"
                 type="date"
@@ -132,7 +129,7 @@ Musterstraße 12
               />
             </div>
           </div>
-          <Textarea
+          <TextareaField
             label="Subject"
             name="subject"
             rows={1}
@@ -140,7 +137,7 @@ Musterstraße 12
             error={fieldErrors.subject}
             onChange={() => clearFieldError("subject")}
           />
-          <Textarea
+          <TextareaField
             label="Message"
             name="message"
             rows={16}
@@ -155,7 +152,7 @@ Musterstraße 12
         form="letter-form"
         type="submit"
         disabled={isLoading}
-        className="rounded-xl bg-black px-6 py-3 text-white transition hover:opacity-90 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="rounded-xl bg-black px-6 py-3 text-white transition hover:opacity-90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-300"
       >
         {isLoading ? "Generating PDF..." : "Generate PDF"}
       </button>

@@ -1,29 +1,27 @@
 "use client";
 
-import { forwardRef, InputHTMLAttributes } from "react";
+import { forwardRef, TextareaHTMLAttributes } from "react";
 import clsx from "clsx";
 import { Field } from "./Field";
 
 type Props = {
   label: string;
   error?: string;
-} & InputHTMLAttributes<HTMLInputElement>;
+} & TextareaHTMLAttributes<HTMLTextAreaElement>;
 
-export const Input = forwardRef<HTMLInputElement, Props>(
+export const TextareaField = forwardRef<HTMLTextAreaElement, Props>(
   ({ label, name, error, className, required, ...props }, ref) => {
     return (
       <Field label={label} name={name} error={error} required={required}>
-        <input
+        <textarea
           ref={ref}
           id={name}
           name={name}
           aria-invalid={Boolean(error)}
           aria-describedby={error && name ? `${name}-error` : undefined}
           className={clsx(
-            "w-full rounded-lg border p-3 text-sm outline-none transition",
-            error
-              ? "border-red-500 focus:ring-2 focus:ring-red-300"
-              : "border-gray-300 focus:ring-2 focus:ring-black/20",
+            "w-full rounded-lg border p-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-300",
+            error ? "border-red-500" : "border-gray-300",
             className,
           )}
           required={required}
@@ -34,4 +32,4 @@ export const Input = forwardRef<HTMLInputElement, Props>(
   },
 );
 
-Input.displayName = "Input";
+TextareaField.displayName = "TextareaField";

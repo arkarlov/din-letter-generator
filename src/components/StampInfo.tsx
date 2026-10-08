@@ -12,7 +12,7 @@ export function StampInfo() {
             href="https://shop.deutschepost.de/internetmarke"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-500 underline"
+            className="text-blue-500 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-300"
           >
             Internetmarke drucken | Shop Deutsche Post
           </a>

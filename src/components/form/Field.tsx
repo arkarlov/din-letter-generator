@@ -1,4 +1,4 @@
-type FieldProps = {
+type Props = {
   label: string;
   name?: string;
   error?: string;
@@ -6,12 +6,16 @@ type FieldProps = {
   required?: boolean;
 };
 
-export function Field({ label, name, error, children, required }: FieldProps) {
+export function Field({ label, name, error, children, required }: Props) {
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={name} className="text-sm font-medium text-gray-700">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && (
+          <span aria-hidden="true" className="text-red-500 ml-1">
+            *
+          </span>
+        )}
       </label>
 
       {children}
