@@ -29,8 +29,8 @@ This document outlines feature ideas, architectural intentions, and implementati
   - Toggle / dropdown selector in the main form or a dedicated Settings panel.
   - Visual diagram or tooltip preview showing folding mark positions and margin differences.
 - **Technical Scope**:
-  - Update `src/components/pdf/config.ts` to support dynamic switching between layout configurations.
-  - Pass letter standard parameter through `PdfData` schema and PDF generator logic.
+  - Update `src/lib/pdf/layout.ts` to support dynamic switching between layout configurations.
+  - Pass letter standard parameter through the `LetterData` schema and PDF generator logic.
 
 ---
 
@@ -90,9 +90,9 @@ This document outlines feature ideas, architectural intentions, and implementati
 
 ---
 
-### 6. Letter Footer Section (DIN 5008 Compliant)
+### 6. Optional Letter Footer
 
-- **Intention**: Add a customizable multi-column footer at the bottom of the page, mandatory for formal and business correspondence.
+- **Intention**: Add a customizable multi-column footer for business identity and contact details. DIN 5008 does not itself require a footer; mandatory business disclosures depend on the applicable legal requirements.
 - **Core Features**:
   - **Multi-column Layout** (1 to 4 columns):
     - Column 1: Company details / Management (e.g., Managing Directors, HRB, Court).
@@ -102,4 +102,4 @@ This document outlines feature ideas, architectural intentions, and implementati
   - **Page Numbering**: Automatic "Page X of Y" rendering for multi-page letters.
   - **Toggle**: Ability to show/hide footer per document type (e.g. private vs. business letter).
 - **Technical Scope**:
-  - Extend `pdfDataSchema` and PDF layout calculation in `src/components/pdf/generatePDF.ts` to dynamically reserve bottom margin (approx. 20-25mm) and draw footer text columns.
+  - Extend `letterSchema` and PDF layout calculation in `src/lib/pdf/generate.ts` to dynamically reserve bottom margin (approx. 20-25mm) and draw footer text columns.

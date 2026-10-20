@@ -1,153 +1,162 @@
 "use client";
 
 import { useState } from "react";
-import { usePdfGenerator } from "@/hooks/usePdfGenerator";
-import { AddressField } from "./AddressField";
-import { Input } from "./form/Input";
-import { Textarea } from "./form/Textarea";
-import { parseFormData } from "./FormPanel.helper";
+import { useGeneratePdf } from "@/hooks/usePdfGenerator";
+import { InputField } from "./form/InputField";
+import { TextareaField } from "./form/TextareaField";
 import { Switch } from "./form/Switch";
-
-export function StampInfo() {
-  return (
-    <div className="space-y-4 text-sm text-gray-700">
-      <h2 className="text-lg font-semibold">
-        How to use an online stamp (Deutsche Post)
-      </h2>
-
-      <ol className="list-decimal pl-5 space-y-2">
-        <li>
-          Go to the{" "}
-          <a
-            href="https://shop.deutschepost.de/internetmarke"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 underline"
-          >
-            Internetmarke drucken | Shop Deutsche Post
-          </a>
-        </li>
-        <li>
-          Select <strong>Standardbrief</strong>.
-        </li>
-        <li>
-          Click <strong>Absender und Empfänger hinzufügen</strong> to add
-          addresses.
-        </li>
-        <li>
-          In <strong>Ausdruck auf</strong> select{" "}
-          <strong>DIN A4 Normalpapier (Einlegeblatt)</strong>.
-        </li>
-        <li>Buy, Download and print the stamp PDF on an A4 sheet.</li>
-        <li>
-          Then print your letter on the same sheet, aligning it with the stamp.
-        </li>
-      </ol>
-
-      <p className="text-xs text-gray-500">
-        Tip: Make sure your printer settings are set to 100% scale (no
-        resizing).
-      </p>
-    </div>
-  );
-}
+import { StampInfo } from "./StampInfo";
+import { letterSchema, type LetterData } from "@/lib/letter/schema";
+import { formatDateInputValue } from "@/lib/letter/date";
+import {
+  getLetterFieldErrors,
+  type LetterFieldErrors,
+} from "@/lib/letter/field-errors";
 
 export default function FormPanel() {
-  const { isLoading, error, generatePdf } = usePdfGenerator();
   const [useReadyStamp, setUseReadyStamp] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<LetterFieldErrors>({});
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const { isLoading, generatePdf } = useGeneratePdf();
+
+  const clearFieldError = (field: keyof LetterData) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    setError(null);
     try {
-      setFormError(null);
-      const payload = parseFormData(formData);
-      await generatePdf(payload);
+      const result = letterSchema.safeParse(formData);
+
+      if (!result.success) {
+        setFieldErrors(getLetterFieldErrors(result.error));
+        return;
+      }
+      setFieldErrors({});
+
+      await generatePdf(result.data);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : String(err));
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred",
+      );
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="p-6 max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Create Letter</h1>
 
       {error && (
-        <div className="rounded-lg bg-red-50 p-4 border border-red-200">
+        <div
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          className="rounded-lg bg-red-50 p-4 border border-red-200"
+        >
           <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
 
-      {formError && (
-        <div className="rounded-lg bg-red-50 p-4 border border-red-200">
-          <p className="text-red-700 text-sm">{formError}</p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        <div className="space-y-4">
-          <Switch
-            checked={useReadyStamp}
-            onChange={setUseReadyStamp}
-            label="Use Deutsche Post ready stamp (contains recipient address)"
-          />
-
-          {useReadyStamp ? (
-            <>
-              <StampInfo />
-              <input type="hidden" name="useReadyStamp" value="on" />
-            </>
-          ) : (
-            <>
-              <AddressField
-                label="Recipient address"
-                name="recipientAddress"
-                placeholder={`Musterfirma GmbH
-Musterstraße 1
-12345 Musterstadt`}
-                required
+      <form id="letter-form" onSubmit={submit} noValidate>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="space-y-4">
+              <Switch
+                checked={useReadyStamp}
+                name="useReadyStamp"
+                onChange={(checked) => {
+                  setUseReadyStamp(checked);
+                  clearFieldError("recipientAddress");
+                }}
+                label="Use Deutsche Post ready stamp (contains recipient address)"
               />
-              <Textarea
+
+              {useReadyStamp ? (
+                <StampInfo />
+              ) : (
+                <>
+                  <TextareaField
+                    className="resize-none"
+                    label="Recipient address"
+                    name="recipientAddress"
+                    rows={5}
+                    placeholder={
+                      "Musterfirma GmbH\nMusterstraße 1\n12345 Musterstadt"
+                    }
+                    required
+                    error={fieldErrors.recipientAddress}
+                    onChange={() => clearFieldError("recipientAddress")}
+                  />
+                  <TextareaField
+                    className="resize-none"
+                    label="Return address"
+                    name="returnAddress"
+                    rows={3}
+                    placeholder={
+                      "Max Mustermann, Musterstraße 12, 12345 Berlin"
+                    }
+                  />
+                </>
+              )}
+            </div>
+            <div className="space-y-4">
+              <TextareaField
                 className="resize-none"
-                label="Return address"
-                name="returnAddress"
-                rows={3}
-                placeholder={`Max Mustermann, Musterstraße 12, 12345 Berlin`}
+                label="Info block"
+                name="infoBlock"
+                rows={5}
+                placeholder={"Max Mustermann\nMusterstraße 12\n12345 Berlin"}
+                required
+                error={fieldErrors.infoBlock}
+                onChange={() => clearFieldError("infoBlock")}
               />
-            </>
-          )}
-        </div>
-        <div className="space-y-4">
-          <AddressField
-            label="Info block"
-            name="infoBlock"
-            placeholder={`Max Mustermann
-Musterstraße 12
-12345 Berlin`}
+              <InputField
+                label="Date"
+                name="date"
+                type="date"
+                className="max-w-xs"
+                defaultValue={formatDateInputValue(new Date())}
+                required
+                error={fieldErrors.date}
+                onChange={() => clearFieldError("date")}
+              />
+            </div>
+          </div>
+          <TextareaField
+            label="Subject"
+            name="subject"
+            rows={1}
             required
+            error={fieldErrors.subject}
+            onChange={() => clearFieldError("subject")}
           />
-          <Input
-            label="Date"
-            name="date"
-            type="date"
-            className="max-w-xs"
-            defaultValue={new Date().toISOString().split("T")[0]}
+          <TextareaField
+            label="Message"
+            name="message"
+            rows={16}
             required
+            error={fieldErrors.message}
+            onChange={() => clearFieldError("message")}
           />
         </div>
-      </div>
-
-      <Textarea label="Subject" name="subject" rows={1} required />
-      <Textarea label="Message" name="message" rows={16} required />
+      </form>
 
       <button
+        form="letter-form"
         type="submit"
         disabled={isLoading}
-        className="rounded-xl bg-black px-6 py-3 text-white transition hover:opacity-90 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="rounded-xl bg-black px-6 py-3 text-white transition hover:opacity-90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-300"
       >
         {isLoading ? "Generating PDF..." : "Generate PDF"}
       </button>
-    </form>
+    </div>
   );
 }

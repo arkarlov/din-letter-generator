@@ -1,11 +1,16 @@
-import type { FontLayout, Layout, LetterType, MmBlockZone } from "./types";
+import type { LetterType } from "@/lib/letter/schema";
+import type { FontLayout, Layout } from "./types";
 
-const PAGE = {
+export const PAGE_GEOMETRY = {
+  widthMm: 210,
+  heightMm: 297,
   leftMarginMm: 25,
   rightColumnXMm: 125,
   leftColumnWidthMm: 80,
   rightColumnWidthMm: 75,
   contentWidthMm: 165,
+  bottomMarginMm: 25,
+  footerBaselineMm: 7,
 } as const;
 
 const BODY = {
@@ -21,67 +26,53 @@ const BODY = {
   contentTopMm: 83,
 } as const;
 
-const zone = ({
-  xMm,
-  yMm,
-  widthMm,
-  heightMm,
-}: MmBlockZone): MmBlockZone => ({
-  xMm,
-  yMm,
-  widthMm,
-  ...(heightMm === undefined ? {} : { heightMm }),
-});
+const LETTERHEAD_HEIGHTS_MM: Record<LetterType, number> = {
+  A: 27,
+  B: 45,
+};
 
-const createLayoutForHeader = (letterheadHeightMm: number): Layout => {
+export const createLayout = (letterType: LetterType): Layout => {
+  const letterheadHeightMm = LETTERHEAD_HEIGHTS_MM[letterType];
+
   return {
     letterheadHeightMm,
-    sender: zone({
-      xMm: PAGE.leftMarginMm,
+    sender: {
+      xMm: PAGE_GEOMETRY.leftMarginMm,
       yMm: letterheadHeightMm,
-      widthMm: PAGE.leftColumnWidthMm,
+      widthMm: PAGE_GEOMETRY.leftColumnWidthMm,
       heightMm: BODY.senderHeightMm,
-    }),
-    recipient: zone({
-      xMm: PAGE.leftMarginMm,
+    },
+    recipient: {
+      xMm: PAGE_GEOMETRY.leftMarginMm,
       yMm: letterheadHeightMm + BODY.senderHeightMm,
-      widthMm: PAGE.leftColumnWidthMm,
+      widthMm: PAGE_GEOMETRY.leftColumnWidthMm,
       heightMm: BODY.recipientHeightMm,
-    }),
-    info: zone({
-      xMm: PAGE.rightColumnXMm,
+    },
+    info: {
+      xMm: PAGE_GEOMETRY.rightColumnXMm,
       yMm: letterheadHeightMm + BODY.infoTopOffsetMm,
-      widthMm: PAGE.rightColumnWidthMm,
+      widthMm: PAGE_GEOMETRY.rightColumnWidthMm,
       heightMm: BODY.infoHeightMm,
-    }),
-    date: zone({
-      xMm: PAGE.rightColumnXMm,
+    },
+    date: {
+      xMm: PAGE_GEOMETRY.rightColumnXMm,
       yMm: letterheadHeightMm + BODY.dateTopOffsetMm,
-      widthMm: PAGE.rightColumnWidthMm,
-    }),
-    subject: zone({
-      xMm: PAGE.leftMarginMm,
+      widthMm: PAGE_GEOMETRY.rightColumnWidthMm,
+    },
+    subject: {
+      xMm: PAGE_GEOMETRY.leftMarginMm,
       yMm: BODY.subjectTopMm + letterheadHeightMm,
-      widthMm: PAGE.contentWidthMm,
-    }),
-    content: zone({
-      xMm: PAGE.leftMarginMm,
+      widthMm: PAGE_GEOMETRY.contentWidthMm,
+    },
+    content: {
+      xMm: PAGE_GEOMETRY.leftMarginMm,
       yMm: BODY.contentTopMm + letterheadHeightMm,
-      widthMm: PAGE.contentWidthMm,
-    }),
+      widthMm: PAGE_GEOMETRY.contentWidthMm,
+    },
     foldMarksMm: BODY.foldMarksOffsetsMm.map(
       (offsetMm) => letterheadHeightMm + offsetMm,
     ),
   };
-};
-
-export const createLayout = (letterType: LetterType): Layout => {
-  switch (letterType) {
-    case "A":
-      return createLayoutForHeader(27);
-    case "B":
-      return createLayoutForHeader(45);
-  }
 };
 
 export const LAYOUT_FONT = {
@@ -92,3 +83,5 @@ export const LAYOUT_FONT = {
   subject: { size: 11, lineHeight: 1.2 },
   content: { size: 11, lineHeight: 1.5 },
 } satisfies FontLayout;
+
+export const PAGE_NUMBER_FONT = { size: 8, lineHeight: 1 };

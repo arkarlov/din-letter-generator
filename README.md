@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DIN Letter Generator
+
+A web app for creating German business letters and downloading them as A4 PDFs. The PDF renderer supports DIN 5008 Form A and Form B layouts, wraps and paginates letter text, and adds page numbers.
+
+## Requirements
+
+- Node.js 20.9 or newer
+- pnpm
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies and start the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm dev           # Start the development server
+pnpm build         # Create a production build
+pnpm start         # Serve the production build
+pnpm test          # Run tests once
+pnpm test:watch    # Run tests in watch mode
+pnpm typecheck     # Run TypeScript checks
+pnpm lint          # Run ESLint
+pnpm format:check  # Check formatting with Prettier
+```
 
-## Learn More
+## PDF Generation
 
-To learn more about Next.js, take a look at the following resources:
+The form validates letter data with the shared Zod schema before submitting it to `POST /api/generate-pdf`. The endpoint validates the request again and returns a PDF response.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The renderer creates A4 PDFs with sender and recipient addresses, an information block, date, subject, and paginated message text. It supports Form A and Form B layout geometry. Invalid requests return `400`; content that does not fit the layout returns `422`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+- `src/app/` — Next.js pages, root layout, and PDF API route
+- `src/components/` — Letter form and shared form controls
+- `src/lib/letter/` — Letter schema, form-data conversion, and field errors
+- `src/lib/pdf/` — PDF layout, text wrapping, drawing, and generation
+- `src/hooks/` — Client-side PDF request and download flow
+- `docs/` — DIN 5008 reference and project roadmap
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tests
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vitest tests cover letter validation, PDF wrapping and pagination, A/B layout geometry, PDF generation, and API error responses.

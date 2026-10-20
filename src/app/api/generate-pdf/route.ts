@@ -1,17 +1,34 @@
-import { generatePDF } from "@/components/pdf/generatePDF";
-import { pdfDataSchema } from "@/components/pdf/types";
+import { letterSchema } from "@/lib/letter/schema";
+import { generateLetterPDF } from "@/lib/pdf/generate";
+import { PdfLayoutError } from "@/lib/pdf/drawing";
 
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  let body: unknown;
 
-  const parsed = pdfDataSchema.safeParse(body);
+  try {
+    body = await req.json();
+  } catch {
+    return new NextResponse(
+      JSON.stringify({
+        error: "Invalid JSON payload",
+      }),
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+  }
+
+  const parsed = letterSchema.safeParse(body);
 
   if (!parsed.success) {
     return new NextResponse(
       JSON.stringify({
-        error: "Validation failed",
+        error: parsed.error.issues[0]?.message ?? "Validation failed",
       }),
       {
         status: 400,
@@ -23,7 +40,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const pdfBytes = await generatePDF(parsed.data);
+    const pdfBytes = await generateLetterPDF(parsed.data);
 
     return new NextResponse(
       new Blob([Buffer.from(pdfBytes)], { type: "application/pdf" }),
@@ -37,13 +54,15 @@ export async function POST(req: Request) {
       },
     );
   } catch (error) {
+    console.error("PDF generation failed", error);
+    const layoutError = error instanceof PdfLayoutError ? error : undefined;
+
     return new NextResponse(
       JSON.stringify({
-        error:
-          error instanceof Error ? error.message : "Failed to generate PDF",
+        error: layoutError?.message ?? "Failed to generate PDF",
       }),
       {
-        status: 400,
+        status: layoutError ? 422 : 500,
         headers: {
           "Content-Type": "application/json",
         },
