@@ -14,9 +14,11 @@ const downloadPdf = (blob: Blob, filename = "letter.pdf") => {
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
+  document.body.append(link);
   link.click();
+  link.remove();
 
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
 export function useGeneratePdf(): UsePdfGeneratorReturn {
@@ -33,9 +35,6 @@ export function useGeneratePdf(): UsePdfGeneratorReturn {
       }
 
       downloadPdf(blob);
-    } catch (error) {
-      console.error("PDF generation error:", error);
-      throw error;
     } finally {
       setIsLoading(false);
     }

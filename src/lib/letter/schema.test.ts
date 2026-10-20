@@ -137,6 +137,25 @@ describe("letterSchema", () => {
       );
     }
   });
+
+  it("rejects invalid calendar dates and oversized letter content", () => {
+    const invalidDate = letterSchema.safeParse({
+      ...validLetter,
+      date: "2026-02-30",
+    });
+    const oversizedSubject = letterSchema.safeParse({
+      ...validLetter,
+      subject: "a".repeat(201),
+    });
+    const tooManyMessageLines = letterSchema.safeParse({
+      ...validLetter,
+      message: Array.from({ length: 501 }, () => "line").join("\n"),
+    });
+
+    expect(invalidDate.success).toBe(false);
+    expect(oversizedSubject.success).toBe(false);
+    expect(tooManyMessageLines.success).toBe(false);
+  });
 });
 
 describe("getLetterFieldErrors", () => {

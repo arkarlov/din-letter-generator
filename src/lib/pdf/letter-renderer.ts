@@ -1,19 +1,20 @@
 import { rgb, type PDFDocument, type PDFPage, type PDFFont } from "pdf-lib";
 
-import { LAYOUT_FONT } from "./config";
+import { LAYOUT_FONT } from "./layout";
 import type { Layout } from "./types";
 import {
   renderFoldMarks,
   renderPageNumber,
   renderTextBlock,
   renderTextLines,
-} from "./utils";
+} from "./drawing";
 
 export function formatLetterDate(date: string): string {
-  return new Date(date).toLocaleDateString("de-DE", {
+  return new Date(`${date}T00:00:00.000Z`).toLocaleDateString("de-DE", {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 

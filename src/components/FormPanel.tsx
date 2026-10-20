@@ -7,6 +7,7 @@ import { TextareaField } from "./form/TextareaField";
 import { Switch } from "./form/Switch";
 import { StampInfo } from "./StampInfo";
 import { letterSchema, type LetterData } from "@/lib/letter/schema";
+import { formatDateInputValue } from "@/lib/letter/date";
 import {
   getLetterFieldErrors,
   type LetterFieldErrors,
@@ -20,9 +21,9 @@ export default function FormPanel() {
   const { isLoading, generatePdf } = useGeneratePdf();
 
   const clearFieldError = (field: keyof LetterData) => {
-    setFieldErrors((current) => {
-      if (!current[field]) return current;
-      const next = { ...current };
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
       delete next[field];
       return next;
     });
@@ -122,7 +123,7 @@ export default function FormPanel() {
                 name="date"
                 type="date"
                 className="max-w-xs"
-                defaultValue={new Date().toISOString().split("T")[0]}
+                defaultValue={formatDateInputValue(new Date())}
                 required
                 error={fieldErrors.date}
                 onChange={() => clearFieldError("date")}
