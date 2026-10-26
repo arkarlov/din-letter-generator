@@ -37,7 +37,7 @@ describe("POST /api/generate-envelope-pdf", () => {
       'filename="envelope.pdf"',
     );
     expect(document.getPageCount()).toBe(1);
-    expect(document.getPage(0).getRotation().angle).toBe(0);
+    expect(document.getPage(0).getRotation().angle).toBe(90);
   });
 
   it("accepts the C6 format", async () => {

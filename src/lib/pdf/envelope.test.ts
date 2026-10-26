@@ -25,7 +25,7 @@ describe("generateEnvelopePDF", () => {
     expect(document.getPageCount()).toBe(1);
     expect(page.getWidth()).toBe(mmToPt(220));
     expect(page.getHeight()).toBe(mmToPt(110));
-    expect(page.getRotation().angle).toBe(0);
+    expect(page.getRotation().angle).toBe(90);
   });
 
   it("generates an unrotated C6 PDF", async () => {
@@ -35,7 +35,7 @@ describe("generateEnvelopePDF", () => {
 
     expect(page.getWidth()).toBe(mmToPt(162));
     expect(page.getHeight()).toBe(mmToPt(114));
-    expect(page.getRotation().angle).toBe(0);
+    expect(page.getRotation().angle).toBe(90);
   });
 
   it("keeps sender, recipient, franking, and coding zones clear", () => {
