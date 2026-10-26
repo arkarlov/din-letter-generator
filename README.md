@@ -44,7 +44,7 @@ The renderer creates A4 PDFs with sender and recipient addresses, an information
 - `src/lib/letter/` — Letter schema, form-data conversion, and field errors
 - `src/lib/pdf/` — PDF layout, text wrapping, drawing, and generation
 - `src/hooks/` — Client-side PDF request and download flow
-- `docs/` — DIN 5008 reference and project roadmap
+- `docs/` — DIN 5008 reference, envelope addressing guide, and project roadmap
 
 ## Tests
 
