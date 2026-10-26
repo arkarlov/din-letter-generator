@@ -124,7 +124,14 @@ export function renderLetterHeader({
     );
   }
 
-  renderTextBlock(infoBlock, page, layout.info, font, LAYOUT_FONT.info);
+  renderTextBlock(
+    infoBlock,
+    page,
+    layout.info,
+    font,
+    LAYOUT_FONT.info,
+    "bottom-up",
+  );
   renderTextBlock(formattedDate, page, layout.date, font, LAYOUT_FONT.date);
   renderTextBlock(subject, page, layout.subject, fontBold, LAYOUT_FONT.subject);
 }

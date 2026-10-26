@@ -1,4 +1,7 @@
-import { PDFDocument, PageSizes, StandardFonts } from "pdf-lib";
+import { PDFDocument, PageSizes } from "pdf-lib";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import fontkit from "@pdf-lib/fontkit";
 
 import {
   formatLetterDate,
@@ -17,9 +20,17 @@ import type { LetterData } from "../letter/schema";
  * @throws Error if text content exceeds layout constraints
  */
 export async function generateLetterPDF(data: LetterData): Promise<Uint8Array> {
-  const pdfDoc = await PDFDocument.create();
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const document = await PDFDocument.create();
+
+  document.registerFontkit(fontkit);
+  const fontBytes = await readFile(
+    join(process.cwd(), "public/fonts/NotoSans-Regular.ttf"),
+  );
+  const fontBoldBytes = await readFile(
+    join(process.cwd(), "public/fonts/NotoSans-Bold.ttf"),
+  );
+  const font = await document.embedFont(fontBytes, { subset: true });
+  const fontBold = await document.embedFont(fontBoldBytes, { subset: true });
 
   const { recipientAddress, infoBlock, subject, returnAddress } = data;
 
@@ -36,7 +47,7 @@ export async function generateLetterPDF(data: LetterData): Promise<Uint8Array> {
     const isFirstPage = i === 0;
 
     renderLetterPage({
-      page: pdfDoc.addPage(PageSizes.A4),
+      page: document.addPage(PageSizes.A4),
       layout,
       font,
       fontBold,
@@ -50,7 +61,7 @@ export async function generateLetterPDF(data: LetterData): Promise<Uint8Array> {
     });
   });
 
-  renderPageNumbers(pdfDoc, font);
+  renderPageNumbers(document, font);
 
-  return pdfDoc.save();
+  return document.save();
 }
