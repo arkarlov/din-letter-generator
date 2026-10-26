@@ -1,6 +1,6 @@
 # DIN Letter Generator
 
-A web app for creating German business letters and downloading them as A4 PDFs. The PDF renderer supports DIN 5008 Form A and Form B layouts, wraps and paginates letter text, and adds page numbers.
+[![Tests](https://github.com/arkarlov/din-letter-generator/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/arkarlov/din-letter-generator/actions/workflows/tests.yml)
 
 ## Requirements
 
