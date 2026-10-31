@@ -1,16 +1,18 @@
 import { PDFDocument, PageSizes } from "pdf-lib";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-import fontkit from "@pdf-lib/fontkit";
 
+import type { EnvelopeData } from "@/lib/letter/envelope-schema";
+import type { LetterData } from "@/lib/letter/schema";
+import { renderEnvelopePage } from "./envelope/envelope-renderer";
+import { createEnvelopeLayout } from "./envelope/layout";
+import { createLayout, LAYOUT_FONT } from "./letter/layout";
 import {
   formatLetterDate,
   renderLetterPage,
   renderPageNumbers,
-} from "./letter-renderer";
-import { createLayout, LAYOUT_FONT } from "./layout";
-import { paginateContent } from "./text-layout";
-import type { LetterData } from "../letter/schema";
+} from "./letter/letter-renderer";
+import { paginateContent } from "./letter/pagination";
+import { embedNotoSans } from "./shared/fonts";
+import { mmToPt } from "./shared/geometry";
 
 /**
  * Generate a PDF document with letter content
@@ -21,16 +23,10 @@ import type { LetterData } from "../letter/schema";
  */
 export async function generateLetterPDF(data: LetterData): Promise<Uint8Array> {
   const document = await PDFDocument.create();
+  document.setTitle(`Brief Form ${data.letterType} (DIN 5008)`);
 
-  document.registerFontkit(fontkit);
-  const fontBytes = await readFile(
-    join(process.cwd(), "public/fonts/NotoSans-Regular.ttf"),
-  );
-  const fontBoldBytes = await readFile(
-    join(process.cwd(), "public/fonts/NotoSans-Bold.ttf"),
-  );
-  const font = await document.embedFont(fontBytes, { subset: true });
-  const fontBold = await document.embedFont(fontBoldBytes, { subset: true });
+  const font = await embedNotoSans(document);
+  const fontBold = await embedNotoSans(document, "bold");
 
   const { recipientAddress, infoBlock, subject, returnAddress } = data;
 
@@ -62,6 +58,33 @@ export async function generateLetterPDF(data: LetterData): Promise<Uint8Array> {
   });
 
   renderPageNumbers(document, font);
+
+  return document.save();
+}
+
+/**
+ * Generate a single-page envelope PDF with sender and recipient addresses
+ * @param data - The envelope data (addresses and format)
+ * @returns Uint8Array containing the PDF bytes
+ * @throws PdfLayoutError if an address does not fit its zone or uses
+ * characters the bundled font cannot encode
+ */
+export async function generateEnvelopePDF(
+  data: EnvelopeData,
+): Promise<Uint8Array> {
+  const document = await PDFDocument.create();
+  document.setTitle(`Briefumschlag ${data.format} (DIN 5008)`);
+
+  const font = await embedNotoSans(document);
+  const layout = createEnvelopeLayout(data.format);
+
+  renderEnvelopePage({
+    page: document.addPage([mmToPt(layout.widthMm), mmToPt(layout.heightMm)]),
+    layout,
+    font,
+    sender: data.sender,
+    recipient: data.recipient,
+  });
 
   return document.save();
 }

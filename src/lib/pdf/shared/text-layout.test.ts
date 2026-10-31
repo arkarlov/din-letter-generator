@@ -1,8 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { PDFDocument, StandardFonts, type PDFFont } from "pdf-lib";
-import { createLayout } from "./layout";
 import { mmToPt, ptToMM } from "./geometry";
-import { paginateContent, paginateTextLines, wrapText } from "./text-layout";
+import { fitFontSize, wrapText } from "./text-layout";
 
 let font: PDFFont;
 
@@ -44,42 +43,24 @@ describe("wrapText", () => {
   });
 });
 
-describe("paginateTextLines", () => {
-  it("fills the first and following pages to their capacities", () => {
-    const lines = ["1", "2", "3", "4", "5"];
+describe("fitFontSize", () => {
+  const lines = ["Musterstraße 12, 12345 Musterstadt"];
 
-    expect(
-      paginateTextLines({
-        lines,
-        firstPageMaxLines: 2,
-        nextPageMaxLines: 2,
-      }),
-    ).toEqual([["1", "2"], ["3", "4"], ["5"]]);
+  it("keeps the requested size when the lines already fit", () => {
+    expect(fitFontSize(font, lines, 12, 7, 200)).toBe(12);
   });
 
-  it("rejects a page capacity that would prevent pagination from advancing", () => {
-    expect(() =>
-      paginateTextLines({
-        lines: ["content"],
-        firstPageMaxLines: 1,
-        nextPageMaxLines: 0,
-      }),
-    ).toThrow("Page capacities must be positive integers");
-  });
-});
+  it("shrinks the size until the widest line fits", () => {
+    const requestedWidthMm = ptToMM(font.widthOfTextAtSize(lines[0], 12));
+    const size = fitFontSize(font, lines, 12, 7, requestedWidthMm - 5);
 
-describe("paginateContent", () => {
-  it("wraps and paginates content using the first-page and continuation areas", () => {
-    const lines = Array.from({ length: 100 }, () => "DIN Brieftext");
-    const pages = paginateContent(
-      lines.join("\n"),
-      font,
-      { size: 11, lineHeight: 1.5 },
-      createLayout("A"),
+    expect(size).toBeLessThan(12);
+    expect(font.widthOfTextAtSize(lines[0], size)).toBeLessThanOrEqual(
+      mmToPt(requestedWidthMm - 5),
     );
+  });
 
-    expect(pages.length).toBeGreaterThan(1);
-    expect(pages[0].length).toBeLessThan(pages[1].length);
-    expect(pages.flat()).toEqual(lines);
+  it("never goes below the minimum size", () => {
+    expect(fitFontSize(font, lines, 12, 7, 1)).toBe(7);
   });
 });

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PdfLayoutError } from "@/lib/pdf/drawing";
+import { PdfLayoutError } from "@/lib/pdf/shared/errors";
 
 const { generateLetterPDF } = vi.hoisted(() => ({
   generateLetterPDF: vi.fn(),

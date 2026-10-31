@@ -20,7 +20,7 @@ describe("renderTextBlock", () => {
         page,
         { xMm: 25, yMm: 40, widthMm: 80, heightMm: 1 },
         font,
-        { size: 10, lineHeight: 1 },
+        { size: 10, lineHeight: 10 },
       ),
     ).toThrow("Text block exceeds allowed height");
   });

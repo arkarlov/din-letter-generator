@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { envelopeSchema } from "@/lib/letter/envelope-schema";
-import { PdfLayoutError } from "@/lib/pdf/drawing";
-import { generateEnvelopePDF } from "@/lib/pdf/envelope";
+import { PdfLayoutError } from "@/lib/pdf/shared/errors";
+import { generateEnvelopePDF } from "@/lib/pdf/generate";
 
 export async function POST(req: Request) {
   let body: unknown;
