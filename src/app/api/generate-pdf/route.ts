@@ -1,6 +1,6 @@
 import { letterSchema } from "@/lib/letter/schema";
 import { generateLetterPDF } from "@/lib/pdf/generate";
-import { PdfLayoutError } from "@/lib/pdf/drawing";
+import { PdfLayoutError } from "@/lib/pdf/shared/errors";
 
 import { NextResponse } from "next/server";
 

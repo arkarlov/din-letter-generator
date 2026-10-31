@@ -76,12 +76,12 @@ export const createLayout = (letterType: LetterType): Layout => {
 };
 
 export const LAYOUT_FONT = {
-  sender: { size: 7, lineHeight: 1 },
-  recipient: { size: 10, lineHeight: 1.1 },
-  info: { size: 11, lineHeight: 1.15 },
-  date: { size: 11, lineHeight: 1 },
-  subject: { size: 11, lineHeight: 1.2 },
-  content: { size: 11, lineHeight: 1.5 },
+  sender: { size: 7, lineHeight: 7 }, // ×1
+  recipient: { size: 10, lineHeight: 11 }, // ×1.1
+  info: { size: 11, lineHeight: 12.65 }, // ×1.15
+  date: { size: 11, lineHeight: 11 }, // ×1
+  subject: { size: 11, lineHeight: 13.2 }, // ×1.2
+  content: { size: 11, lineHeight: 16.5 }, // ×1.5
 } satisfies FontLayout;
 
-export const PAGE_NUMBER_FONT = { size: 8, lineHeight: 1 };
+export const PAGE_NUMBER_FONT = { size: 8, lineHeight: 8 }; // ×1

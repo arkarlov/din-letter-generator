@@ -42,7 +42,7 @@ The renderer creates A4 PDFs with sender and recipient addresses, an information
 - `src/app/` — Next.js pages, root layout, and PDF API route
 - `src/components/` — Letter form and shared form controls
 - `src/lib/letter/` — Letter schema, form-data conversion, and field errors
-- `src/lib/pdf/` — PDF layout, text wrapping, drawing, and generation
+- `src/lib/pdf/` — PDF generation entry points (`generate.ts`), with `letter/`, `envelope/` and `shared/` (fonts, drawing, text wrapping) modules
 - `src/hooks/` — Client-side PDF request and download flow
 - `docs/` — DIN 5008 reference, envelope addressing guide, and project roadmap
 

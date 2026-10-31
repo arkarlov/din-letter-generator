@@ -29,7 +29,7 @@ This document outlines feature ideas, architectural intentions, and implementati
   - Toggle / dropdown selector in the main form or a dedicated Settings panel.
   - Visual diagram or tooltip preview showing folding mark positions and margin differences.
 - **Technical Scope**:
-  - Update `src/lib/pdf/layout.ts` to support dynamic switching between layout configurations.
+  - Update `src/lib/pdf/letter/layout.ts` to support dynamic switching between layout configurations.
   - Pass letter standard parameter through the `LetterData` schema and PDF generator logic.
 
 ---

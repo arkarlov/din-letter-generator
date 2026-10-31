@@ -1,11 +1,4 @@
-export type MmBlockZone = {
-  xMm: number;
-  yMm: number;
-  widthMm: number;
-  heightMm?: number;
-};
-
-export type FontOptions = { size: number; lineHeight: number };
+import type { FontOptions, MmBlockZone } from "../shared/types";
 
 export type TextLayout = {
   sender: MmBlockZone;
@@ -22,5 +15,3 @@ export type Layout = TextLayout & {
   letterheadHeightMm: number;
   foldMarksMm: readonly number[];
 };
-
-export type VerticalDirection = "top-down" | "bottom-up";
