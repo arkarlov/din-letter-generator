@@ -1,15 +1,15 @@
 import { z } from "zod";
-import type { LetterData } from "./schema";
 
-export type LetterFieldErrors = Partial<Record<keyof LetterData, string>>;
+/** Keyed by the field's full name, for example `recipient.street`. */
+export type FieldErrors = Record<string, string>;
 
-export function getLetterFieldErrors(error: z.ZodError): LetterFieldErrors {
-  const fieldErrors: LetterFieldErrors = {};
+export function getFieldErrors(error: z.ZodError): FieldErrors {
+  const fieldErrors: FieldErrors = {};
 
   for (const issue of error.issues) {
-    const field = issue.path[0];
-    if (typeof field === "string" && !fieldErrors[field as keyof LetterData]) {
-      fieldErrors[field as keyof LetterData] = issue.message;
+    const field = issue.path.join(".");
+    if (field && !fieldErrors[field]) {
+      fieldErrors[field] = issue.message;
     }
   }
 

@@ -14,6 +14,8 @@ This document outlines feature ideas, architectural intentions, and implementati
 | 4    | Address Autocomplete API Integration            | 💡 Planned | Medium   |
 | 5    | Header Motives & Branding                       | 💡 Planned | Low      |
 | 6    | Letter Footer Section                           | 💡 Planned | High     |
+| 7    | Sender Reuse Across Letter & Envelope           | 💡 Planned | High     |
+| 8    | Salutation, Closing & Enclosures                | 💡 Planned | Medium   |
 
 ---
 
@@ -103,3 +105,26 @@ This document outlines feature ideas, architectural intentions, and implementati
   - **Toggle**: Ability to show/hide footer per document type (e.g. private vs. business letter).
 - **Technical Scope**:
   - Extend `letterSchema` and PDF layout calculation in `src/lib/pdf/generate.ts` to dynamically reserve bottom margin (approx. 20-25mm) and draw footer text columns.
+
+---
+
+### 7. Sender Reuse Across Letter & Envelope
+
+- **Intention**: Enter sender and recipient addresses once and reuse them in both documents. The structured `SenderAddress` and `RecipientAddress` types already feed both PDFs, but the two forms are still filled in separately.
+- **Core Features**:
+  - Carry the addresses from the letter form over to the envelope form.
+  - Saved sender profile in `localStorage`, then an address book with JSON import and export.
+- **Technical Scope**:
+  - Best built together with item 1 persistence, since both need a stored draft.
+
+---
+
+### 8. Salutation, Closing & Enclosures
+
+- **Intention**: Move the parts of the letter that are now typed into the message into their own fields.
+- **Core Features**:
+  - Salutation suggested from the recipient `contactPerson` (for example "Sehr geehrte Frau Dr. Schulz,").
+  - Closing, signing authority (i. A., i. V., ppa.) and signature name taken from the sender.
+  - Enclosures, one per line.
+- **Technical Scope**:
+  - Pagination must keep the signature block together with the end of the text.

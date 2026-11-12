@@ -8,6 +8,7 @@ import {
 
 import { renderTextBlock, renderTextLines } from "../shared/drawing";
 import { mmToPt } from "../shared/geometry";
+import type { AddressField } from "./address-field";
 import { LAYOUT_FONT, PAGE_GEOMETRY, PAGE_NUMBER_FONT } from "./layout";
 import type { Layout } from "./types";
 
@@ -27,8 +28,7 @@ type RenderLetterPageProps = {
   fontBold: PDFFont;
   content: string[];
   isFirstPage: boolean;
-  returnAddress?: string;
-  recipientAddress?: string;
+  addressField?: AddressField;
   infoBlock: string;
   formattedDate: string;
   subject: string;
@@ -41,8 +41,7 @@ export function renderLetterPage({
   fontBold,
   content,
   isFirstPage,
-  returnAddress,
-  recipientAddress,
+  addressField,
   infoBlock,
   formattedDate,
   subject,
@@ -59,8 +58,7 @@ export function renderLetterPage({
       layout,
       font,
       fontBold,
-      returnAddress,
-      recipientAddress,
+      addressField,
       infoBlock,
       formattedDate,
       subject,
@@ -86,8 +84,7 @@ type RenderLetterHeaderProps = {
   layout: Layout;
   font: PDFFont;
   fontBold: PDFFont;
-  returnAddress?: string;
-  recipientAddress?: string;
+  addressField?: AddressField;
   infoBlock: string;
   formattedDate: string;
   subject: string;
@@ -98,31 +95,33 @@ export function renderLetterHeader({
   layout,
   font,
   fontBold,
-  returnAddress,
-  recipientAddress,
+  addressField,
   infoBlock,
   formattedDate,
   subject,
 }: RenderLetterHeaderProps) {
-  if (returnAddress) {
-    renderTextBlock(
-      returnAddress,
-      page,
-      layout.sender,
-      font,
-      LAYOUT_FONT.sender,
-      "bottom-up",
-    );
-  }
+  if (addressField) {
+    const { returnLine, note, recipientLines } = addressField;
 
-  if (recipientAddress) {
+    renderTextBlock(returnLine, page, layout.sender, font, LAYOUT_FONT.sender);
+
+    if (note) {
+      renderTextBlock(
+        note,
+        page,
+        layout.sender,
+        font,
+        LAYOUT_FONT.sender,
+        "bottom-up",
+      );
+    }
+
     renderTextBlock(
-      recipientAddress,
+      recipientLines.join("\n"),
       page,
       layout.recipient,
       font,
       LAYOUT_FONT.recipient,
-      "bottom-up",
     );
   }
 

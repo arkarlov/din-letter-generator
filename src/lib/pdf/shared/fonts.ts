@@ -26,6 +26,7 @@ export const assertEncodable = (
   font: PDFFont,
   lines: string[],
   label: string,
+  field?: string,
 ) => {
   const supported = new Set(font.getCharacterSet());
   const hasUnsupported = lines.some((line) =>
@@ -38,6 +39,7 @@ export const assertEncodable = (
   if (hasUnsupported) {
     throw new PdfLayoutError(
       `The ${label} contains characters unsupported by the bundled Noto Sans font.`,
+      field,
     );
   }
 };

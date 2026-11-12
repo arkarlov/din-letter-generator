@@ -1,13 +1,26 @@
 import type { EnvelopeData } from "../letter/envelope-schema";
 import type { LetterData } from "../letter/schema";
 
-const parseResponseError = async (response: Response): Promise<string> => {
+export class PdfRequestError extends Error {
+  /** Name of the form field the server rejected, when one is known. */
+  readonly field?: string;
+
+  constructor(message: string, field?: string) {
+    super(message);
+    this.name = "PdfRequestError";
+    this.field = field;
+  }
+}
+
+const parseResponseError = async (
+  response: Response,
+): Promise<PdfRequestError> => {
   try {
     const body = await response.json();
 
-    return body.error || "Unknown error";
+    return new PdfRequestError(body.error || "Unknown error", body.field);
   } catch {
-    return response.statusText || "Unknown error";
+    return new PdfRequestError(response.statusText || "Unknown error");
   }
 };
 
@@ -21,9 +34,7 @@ export const requestLetterPdf = async (payload: LetterData) => {
   });
 
   if (!response.ok) {
-    const errorMessage = await parseResponseError(response);
-
-    throw new Error(errorMessage);
+    throw await parseResponseError(response);
   }
 
   return response.blob();
@@ -39,9 +50,7 @@ export const requestEnvelopePdf = async (payload: EnvelopeData) => {
   });
 
   if (!response.ok) {
-    const errorMessage = await parseResponseError(response);
-
-    throw new Error(errorMessage);
+    throw await parseResponseError(response);
   }
 
   return response.blob();

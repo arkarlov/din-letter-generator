@@ -60,6 +60,7 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         error: layoutError?.message ?? "Failed to generate PDF",
+        field: layoutError?.field,
       }),
       {
         status: layoutError ? 422 : 500,

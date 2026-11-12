@@ -2,24 +2,38 @@
 
 import { useState } from "react";
 import { useGenerateLetterPdf } from "@/hooks/usePdfGenerator";
+import { AddressFields } from "./form/AddressFields";
 import { InputField } from "./form/InputField";
 import { TextareaField } from "./form/TextareaField";
 import { Switch } from "./form/Switch";
 import { StampInfo } from "./StampInfo";
-import { letterSchema, type LetterData } from "@/lib/letter/schema";
+import { PdfRequestError } from "@/lib/api/pdf";
+import { letterSchema } from "@/lib/letter/schema";
 import { formatDateInputValue } from "@/lib/letter/date";
-import {
-  getLetterFieldErrors,
-  type LetterFieldErrors,
-} from "@/lib/letter/field-errors";
+import { getFieldErrors, type FieldErrors } from "@/lib/letter/field-errors";
+
+const POSTAL_NOTES = [
+  "Einschreiben",
+  "Einschreiben Einwurf",
+  "Einschreiben Rückschein",
+  "Persönlich",
+  "Vertraulich",
+  "Persönlich/Vertraulich",
+  "Bitte nachsenden",
+  "Nicht nachsenden",
+  "Wenn unzustellbar zurück",
+  "Bei Umzug mit neuer Anschrift zurück",
+];
 
 export function LetterFormPanel() {
   const [useReadyStamp, setUseReadyStamp] = useState(false);
+  const [useCustomInfoBlock, setUseCustomInfoBlock] = useState(false);
+  const [showGuides, setShowGuides] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<LetterFieldErrors>({});
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const { isLoading, generatePdf } = useGenerateLetterPdf();
 
-  const clearFieldError = (field: keyof LetterData) => {
+  const clearFieldError = (field: string) => {
     setFieldErrors((previous) => {
       if (!previous[field]) return previous;
       const next = { ...previous };
@@ -37,13 +51,19 @@ export function LetterFormPanel() {
       const result = letterSchema.safeParse(formData);
 
       if (!result.success) {
-        setFieldErrors(getLetterFieldErrors(result.error));
+        setFieldErrors(getFieldErrors(result.error));
         return;
       }
 
       setFieldErrors({});
       await generatePdf(result.data);
     } catch (caught) {
+      if (caught instanceof PdfRequestError && caught.field) {
+        const { field, message } = caught;
+        setFieldErrors((previous) => ({ ...previous, [field]: message }));
+        return;
+      }
+
       setError(
         caught instanceof Error
           ? caught.message
@@ -53,7 +73,7 @@ export function LetterFormPanel() {
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="space-y-5">
       {error && (
         <div
           role="alert"
@@ -66,15 +86,51 @@ export function LetterFormPanel() {
       )}
 
       <form id="letter-form" onSubmit={submit} noValidate>
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div className="space-y-4">
+            <div className="space-y-3">
+              <AddressFields
+                variant="sender"
+                legend="Sender"
+                name="sender"
+                id="letter-sender"
+                errors={fieldErrors}
+                onFieldChange={clearFieldError}
+              />
+              <Switch
+                checked={useCustomInfoBlock}
+                onChange={(checked) => {
+                  setUseCustomInfoBlock(checked);
+                  clearFieldError("customInfoBlock");
+                }}
+                label="Write the info block myself (default: sender address)"
+              />
+              {useCustomInfoBlock && (
+                <TextareaField
+                  className="resize-none"
+                  label="Info block"
+                  name="customInfoBlock"
+                  rows={5}
+                  placeholder={[
+                    "Max Mustermann",
+                    "Musterstraße 12",
+                    "12345 Berlin",
+                    "Telefon: 030 1234567",
+                    "E-Mail: max@example.de",
+                  ].join("\n")}
+                  required
+                  error={fieldErrors.customInfoBlock}
+                  onChange={() => clearFieldError("customInfoBlock")}
+                />
+              )}
+            </div>
+            <div className="space-y-3">
               <Switch
                 checked={useReadyStamp}
                 name="useReadyStamp"
                 onChange={(checked) => {
                   setUseReadyStamp(checked);
-                  clearFieldError("recipientAddress");
+                  clearFieldError("recipient");
                 }}
                 label="Use Deutsche Post ready stamp (contains recipient address)"
               />
@@ -82,54 +138,53 @@ export function LetterFormPanel() {
               {useReadyStamp ? (
                 <StampInfo />
               ) : (
-                <>
-                  <TextareaField
-                    className="resize-none"
-                    label="Recipient address"
-                    name="recipientAddress"
-                    rows={5}
-                    placeholder={
-                      "Musterfirma GmbH\nMusterstraße 1\n12345 Musterstadt"
-                    }
-                    required
-                    error={fieldErrors.recipientAddress}
-                    onChange={() => clearFieldError("recipientAddress")}
-                  />
-                  <TextareaField
-                    className="resize-none"
-                    label="Return address"
-                    name="returnAddress"
-                    rows={3}
-                    placeholder={
-                      "Max Mustermann, Musterstraße 12, 12345 Berlin"
-                    }
-                  />
-                </>
+                <AddressFields
+                  variant="recipient"
+                  legend="Recipient"
+                  name="recipient"
+                  id="letter-recipient"
+                  errors={fieldErrors}
+                  onFieldChange={clearFieldError}
+                />
               )}
             </div>
-            <div className="space-y-4">
-              <TextareaField
-                className="resize-none"
-                label="Info block"
-                name="infoBlock"
-                rows={5}
-                placeholder={"Max Mustermann\nMusterstraße 12\n12345 Berlin"}
-                required
-                error={fieldErrors.infoBlock}
-                onChange={() => clearFieldError("infoBlock")}
+          </div>
+
+          {!useReadyStamp && (
+            <div className="space-y-3">
+              <InputField
+                label="Return line"
+                name="returnLineOverride"
+                placeholder="Leave empty to build it from the sender address"
+                error={fieldErrors.returnLineOverride}
+                onChange={() => clearFieldError("returnLineOverride")}
               />
               <InputField
-                label="Date"
-                name="date"
-                type="date"
-                className="max-w-xs"
-                defaultValue={formatDateInputValue(new Date())}
-                required
-                error={fieldErrors.date}
-                onChange={() => clearFieldError("date")}
+                label="Postal note (Vermerk)"
+                name="note"
+                list="postal-notes"
+                placeholder="For example Einschreiben"
+                error={fieldErrors.note}
+                onChange={() => clearFieldError("note")}
               />
+              <datalist id="postal-notes">
+                {POSTAL_NOTES.map((note) => (
+                  <option key={note} value={note} />
+                ))}
+              </datalist>
             </div>
-          </div>
+          )}
+
+          <InputField
+            label="Date"
+            name="date"
+            type="date"
+            className="max-w-xs"
+            defaultValue={formatDateInputValue(new Date())}
+            required
+            error={fieldErrors.date}
+            onChange={() => clearFieldError("date")}
+          />
           <TextareaField
             label="Subject"
             name="subject"
@@ -146,6 +201,14 @@ export function LetterFormPanel() {
             error={fieldErrors.message}
             onChange={() => clearFieldError("message")}
           />
+          {process.env.NODE_ENV !== "production" && (
+            <Switch
+              checked={showGuides}
+              name="showGuides"
+              onChange={setShowGuides}
+              label="Show layout grid and zones in the PDF (debug)"
+            />
+          )}
         </div>
       </form>
 

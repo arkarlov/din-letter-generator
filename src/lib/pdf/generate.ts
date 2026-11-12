@@ -1,9 +1,12 @@
 import { PDFDocument, PageSizes } from "pdf-lib";
 
 import type { EnvelopeData } from "@/lib/letter/envelope-schema";
+import { toAddressLines } from "@/lib/letter/address-lines";
 import type { LetterData } from "@/lib/letter/schema";
 import { renderEnvelopePage } from "./envelope/envelope-renderer";
 import { createEnvelopeLayout } from "./envelope/layout";
+import { prepareAddressField } from "./letter/address-field";
+import { renderLayoutGuides } from "./letter/debug-guides";
 import { createLayout, LAYOUT_FONT } from "./letter/layout";
 import {
   formatLetterDate,
@@ -28,7 +31,13 @@ export async function generateLetterPDF(data: LetterData): Promise<Uint8Array> {
   const font = await embedNotoSans(document);
   const fontBold = await embedNotoSans(document, "bold");
 
-  const { recipientAddress, infoBlock, subject, returnAddress } = data;
+  const { subject } = data;
+  const infoBlock =
+    data.customInfoBlock ?? toAddressLines(data.sender).join("\n");
+  // A ready stamp already carries both addresses, so the window stays empty.
+  const addressField = data.useReadyStamp
+    ? undefined
+    : prepareAddressField(data, font);
 
   const layout = createLayout(data.letterType);
   const formattedDate = formatLetterDate(data.date);
@@ -41,16 +50,20 @@ export async function generateLetterPDF(data: LetterData): Promise<Uint8Array> {
 
   contentPages.forEach((content, i) => {
     const isFirstPage = i === 0;
+    const page = document.addPage(PageSizes.A4);
+
+    if (data.showGuides) {
+      renderLayoutGuides({ page, layout, font, isFirstPage });
+    }
 
     renderLetterPage({
-      page: document.addPage(PageSizes.A4),
+      page,
       layout,
       font,
       fontBold,
       content,
       isFirstPage,
-      returnAddress,
-      recipientAddress,
+      addressField,
       infoBlock,
       formattedDate,
       subject,
@@ -82,8 +95,8 @@ export async function generateEnvelopePDF(
     page: document.addPage([mmToPt(layout.widthMm), mmToPt(layout.heightMm)]),
     layout,
     font,
-    sender: data.sender,
-    recipient: data.recipient,
+    sender: toAddressLines(data.sender).join("\n"),
+    recipient: toAddressLines(data.recipient).join("\n"),
   });
 
   return document.save();

@@ -1,6 +1,6 @@
 import { degrees, type PDFFont, type PDFPage } from "pdf-lib";
 
-import { renderTextLines } from "../shared/drawing";
+import { getTextBlockHeight, renderTextLines } from "../shared/drawing";
 import { PdfLayoutError } from "../shared/errors";
 import { assertEncodable } from "../shared/fonts";
 import { ptToMM } from "../shared/geometry";
@@ -54,7 +54,8 @@ export function renderEnvelopePage({
   recipient,
 }: RenderEnvelopePageProps) {
   const { lineHeight } = ENVELOPE_FONT;
-  const lineHeightMm = ptToMM(lineHeight);
+  const blockHeightMm = ({ size, lines }: { size: number; lines: string[] }) =>
+    ptToMM(getTextBlockHeight(font, size, lineHeight, lines.length));
 
   const senderBlock = prepareAddress(
     sender,
@@ -64,7 +65,7 @@ export function renderEnvelopePage({
   );
   if (
     layout.sender.heightMm !== undefined &&
-    senderBlock.lines.length * lineHeightMm > layout.sender.heightMm
+    blockHeightMm(senderBlock) > layout.sender.heightMm
   ) {
     throw new PdfLayoutError("Sender address does not fit in the sender zone.");
   }
@@ -88,9 +89,7 @@ export function renderEnvelopePage({
       ptToMM(font.widthOfTextAtSize(line, recipientBlock.size)),
     ),
   );
-  const textHeightMm =
-    ptToMM(font.heightAtSize(recipientBlock.size)) +
-    (recipientBlock.lines.length - 1) * lineHeightMm;
+  const textHeightMm = blockHeightMm(recipientBlock);
 
   renderTextLines(
     page,
