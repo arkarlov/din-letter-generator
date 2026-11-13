@@ -105,14 +105,16 @@ export function AddressFields({
         <>
           <InputField
             {...field("name")}
-            label="Name / Company"
+            label={variant === "sender" ? "Name" : "Name / Company"}
             maxLength={50}
             required={variant === "sender"}
           />
           <InputField
             {...field("addon")}
             label="Address addition"
-            placeholder="Department, c/o"
+            placeholder={
+              variant === "sender" ? "c/o Erika Muster" : "Department, c/o"
+            }
             maxLength={50}
           />
 
