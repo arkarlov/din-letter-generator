@@ -12,8 +12,8 @@ describe("createLayout", () => {
     expect(formB.sender.yMm).toBe(45);
     expect(formA.recipient.yMm).toBe(44.7);
     expect(formB.recipient.yMm).toBe(62.7);
-    expect(formA.content.yMm).toBe(110);
-    expect(formB.content.yMm).toBe(128);
+    expect(formA.info.yMm).toBe(32);
+    expect(formB.info.yMm).toBe(50);
   });
 
   it("keeps the text and information columns aligned across forms", () => {

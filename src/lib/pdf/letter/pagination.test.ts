@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { PDFDocument, StandardFonts, type PDFFont } from "pdf-lib";
+import { layoutFirstPage } from "./first-page";
 import { createLayout } from "./layout";
 import { paginateContent, paginateTextLines } from "./pagination";
 
@@ -32,6 +33,15 @@ describe("paginateTextLines", () => {
   });
 });
 
+const formALayout = () =>
+  layoutFirstPage({
+    geometry: createLayout("A"),
+    font,
+    fontBold: font,
+    infoBlock: "Max Mustermann\n12345 Berlin",
+    subject: "Betreff",
+  });
+
 describe("paginateContent", () => {
   it("wraps and paginates content using the first-page and continuation areas", () => {
     const lines = Array.from({ length: 100 }, () => "DIN Brieftext");
@@ -39,7 +49,7 @@ describe("paginateContent", () => {
       lines.join("\n"),
       font,
       { size: 11, lineHeight: 16.5 },
-      createLayout("A"),
+      formALayout(),
     );
 
     expect(pages.length).toBeGreaterThan(1);
@@ -49,17 +59,12 @@ describe("paginateContent", () => {
 
   it("returns one empty page for empty content", () => {
     expect(
-      paginateContent(
-        "",
-        font,
-        { size: 11, lineHeight: 16.5 },
-        createLayout("A"),
-      ),
+      paginateContent("", font, { size: 11, lineHeight: 16.5 }, formALayout()),
     ).toEqual([[""]]);
   });
 
   it("rejects a first page without room for any line", () => {
-    const layout = createLayout("A");
+    const layout = formALayout();
 
     expect(() =>
       paginateContent(

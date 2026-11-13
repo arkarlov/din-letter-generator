@@ -7,6 +7,7 @@ import { renderEnvelopePage } from "./envelope/envelope-renderer";
 import { createEnvelopeLayout } from "./envelope/layout";
 import { prepareAddressField } from "./letter/address-field";
 import { renderLayoutGuides } from "./letter/debug-guides";
+import { layoutFirstPage } from "./letter/first-page";
 import { createLayout, LAYOUT_FONT } from "./letter/layout";
 import {
   formatLetterDate,
@@ -39,7 +40,13 @@ export async function generateLetterPDF(data: LetterData): Promise<Uint8Array> {
     ? undefined
     : prepareAddressField(data, font);
 
-  const layout = createLayout(data.letterType);
+  const layout = layoutFirstPage({
+    geometry: createLayout(data.letterType),
+    font,
+    fontBold,
+    infoBlock,
+    subject,
+  });
   const formattedDate = formatLetterDate(data.date);
   const contentPages = paginateContent(
     data.message,

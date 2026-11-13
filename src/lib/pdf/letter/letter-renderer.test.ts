@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { mmToPt } from "../shared/geometry";
+import { layoutFirstPage } from "./first-page";
 import { createLayout, LAYOUT_FONT } from "./layout";
 import { formatLetterDate, renderLetterHeader } from "./letter-renderer";
 
@@ -16,7 +17,13 @@ describe("renderLetterHeader", () => {
     const font = await document.embedFont(StandardFonts.Helvetica);
     const page = document.addPage();
     const drawText = vi.spyOn(page, "drawText");
-    const layout = createLayout("B");
+    const layout = layoutFirstPage({
+      geometry: createLayout("B"),
+      font,
+      fontBold: font,
+      infoBlock: "Info",
+      subject: "Subject",
+    });
 
     renderLetterHeader({
       page,

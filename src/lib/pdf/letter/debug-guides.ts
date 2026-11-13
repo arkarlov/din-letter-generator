@@ -12,9 +12,6 @@ import type { MmBlockZone } from "../shared/types";
 import { LAYOUT_FONT, PAGE_GEOMETRY } from "./layout";
 import type { Layout } from "./types";
 
-/** The envelope window per DIN 5008. Text zones start 5 mm further right. */
-const ADDRESS_FIELD_MM = { xMm: 20, widthMm: 85, heightMm: 45 };
-
 const GRID_STEP_MM = 10;
 const LABEL_SIZE = 5;
 const RULER_SIZE = 4;
@@ -192,7 +189,13 @@ export function renderLayoutGuides({
   renderZone(
     page,
     font,
-    { ...ADDRESS_FIELD_MM, yMm: layout.letterheadHeightMm },
+    {
+      xMm: PAGE_GEOMETRY.addressFieldXMm,
+      yMm: layout.letterheadHeightMm,
+      widthMm: PAGE_GEOMETRY.addressFieldWidthMm,
+      heightMm:
+        (layout.sender.heightMm ?? 0) + (layout.recipient.heightMm ?? 0),
+    },
     "Anschriftfeld (Fenster)",
     COLORS.address,
     true,
@@ -210,6 +213,18 @@ export function renderLayoutGuides({
     withHeight(layout.recipient, 0),
     "Anschriftzone",
     COLORS.address,
+  );
+  renderZone(
+    page,
+    font,
+    {
+      ...layout.info,
+      // The DIN 5008 information block includes the date.
+      heightMm: layout.date.yMm + (layout.date.heightMm ?? 0) - layout.info.yMm,
+    },
+    "Informationsblock (min. 40 mm)",
+    COLORS.info,
+    true,
   );
   renderZone(
     page,
