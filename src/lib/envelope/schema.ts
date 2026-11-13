@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { recipientAddressSchema, senderAddressSchema } from "./address";
+import {
+  recipientAddressSchema,
+  senderAddressSchema,
+} from "@/lib/letter/address";
 
 export const envelopeFormatSchema = z.enum(["DL", "C6"]);
 export type EnvelopeFormat = z.infer<typeof envelopeFormatSchema>;

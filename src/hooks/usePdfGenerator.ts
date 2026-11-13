@@ -1,7 +1,7 @@
 "use client";
 
 import { requestEnvelopePdf, requestLetterPdf } from "@/lib/api/pdf";
-import type { EnvelopeData } from "@/lib/letter/envelope-schema";
+import type { EnvelopeData } from "@/lib/envelope/schema";
 import type { LetterData } from "@/lib/letter/schema";
 import { useState } from "react";
 

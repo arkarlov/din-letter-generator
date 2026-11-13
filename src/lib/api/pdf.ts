@@ -1,4 +1,4 @@
-import type { EnvelopeData } from "../letter/envelope-schema";
+import type { EnvelopeData } from "../envelope/schema";
 import type { LetterData } from "../letter/schema";
 
 export class PdfRequestError extends Error {

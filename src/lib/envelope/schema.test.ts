@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { envelopeSchema } from "./envelope-schema";
+import { envelopeSchema } from "./schema";
 
 const sender = {
   kind: "house",

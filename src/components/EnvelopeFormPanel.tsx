@@ -6,7 +6,7 @@ import {
   envelopeFormatSchema,
   envelopeSchema,
   type EnvelopeData,
-} from "@/lib/letter/envelope-schema";
+} from "@/lib/envelope/schema";
 import { formDataToObject } from "@/lib/letter/form-data";
 import { getFieldErrors, type FieldErrors } from "@/lib/letter/field-errors";
 import { AddressFields } from "./form/AddressFields";

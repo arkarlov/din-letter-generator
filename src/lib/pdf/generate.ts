@@ -1,6 +1,6 @@
 import { PDFDocument, PageSizes } from "pdf-lib";
 
-import type { EnvelopeData } from "@/lib/letter/envelope-schema";
+import type { EnvelopeData } from "@/lib/envelope/schema";
 import { toAddressLines } from "@/lib/letter/address-lines";
 import type { LetterData } from "@/lib/letter/schema";
 import { renderEnvelopePage } from "./envelope/envelope-renderer";

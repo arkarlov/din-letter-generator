@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { envelopeSchema } from "@/lib/letter/envelope-schema";
+import { envelopeSchema } from "@/lib/envelope/schema";
 import { PdfLayoutError } from "@/lib/pdf/shared/errors";
 import { generateEnvelopePDF } from "@/lib/pdf/generate";
 

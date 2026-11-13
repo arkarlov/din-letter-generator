@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PDFDocument, PDFPage, PageSizes } from "pdf-lib";
-import type { EnvelopeData } from "@/lib/letter/envelope-schema";
+import type { EnvelopeData } from "@/lib/envelope/schema";
 import type { LetterData } from "@/lib/letter/schema";
 import { generateEnvelopePDF, generateLetterPDF } from "./generate";
 import { PdfLayoutError } from "./shared/errors";
