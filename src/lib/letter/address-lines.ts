@@ -44,9 +44,7 @@ export function toAddressLines(
     address.name,
     contactPerson && toContactLine(contactPerson),
     address.addon,
-    address.kind === "house"
-      ? `${address.street} ${address.number ?? ""}`
-      : `Postfach ${address.poBox}`,
+    address.kind === "house" ? address.street : `Postfach ${address.poBox}`,
     `${address.zip} ${toForeignCase(address.city)}`,
     domestic ? undefined : toForeignCase(address.country ?? ""),
   ]);

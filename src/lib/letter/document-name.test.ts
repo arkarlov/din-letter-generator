@@ -7,8 +7,7 @@ const company: RecipientAddress = {
   kind: "house",
   name: "Bezirksamt Treptow-Köpenick",
   contactPerson: { salutation: "frau", lastName: "Karadag" },
-  street: "Alt-Köpenick",
-  number: "21",
+  street: "Alt-Köpenick 21",
   zip: "12555",
   city: "Berlin",
 };
@@ -16,8 +15,7 @@ const company: RecipientAddress = {
 const sender = {
   kind: "house" as const,
   name: "Max Mustermann",
-  street: "Gartenweg",
-  number: "5",
+  street: "Gartenweg 5",
   zip: "04177",
   city: "Leipzig",
 };

@@ -5,8 +5,7 @@ import { buildReturnLine, toAddressLines } from "./address-lines";
 const sender: SenderAddress = {
   kind: "house",
   name: "Max Mustermann",
-  street: "Gartenweg",
-  number: "5",
+  street: "Gartenweg 5",
   zip: "04177",
   city: "Leipzig",
 };
@@ -20,10 +19,22 @@ describe("toAddressLines", () => {
     ]);
   });
 
-  it("omits a missing house number", () => {
-    const [, street] = toAddressLines({ ...sender, number: undefined });
+  it("keeps the street line as written, for any house number order", () => {
+    const address: RecipientAddress = {
+      kind: "house",
+      name: "Marie Dupont",
+      street: "12 rue de la Paix",
+      zip: "75002",
+      city: "Paris",
+      country: "Frankreich",
+    };
 
-    expect(street).toBe("Gartenweg");
+    expect(toAddressLines(address)).toEqual([
+      "Marie Dupont",
+      "12 rue de la Paix",
+      "75002 PARIS",
+      "FRANKREICH",
+    ]);
   });
 
   it("builds a PO box address", () => {
@@ -53,8 +64,7 @@ describe("toAddressLines", () => {
         firstName: "Jana",
         lastName: "Schulz",
       },
-      street: "Hafenweg",
-      number: "4",
+      street: "Hafenweg 4",
       zip: "20457",
       city: "Hamburg",
     };
@@ -77,8 +87,7 @@ describe("toAddressLines", () => {
         firstName: "Jan",
         lastName: "Bauer",
       },
-      street: "Gartenweg",
-      number: "5",
+      street: "Gartenweg 5",
       zip: "04177",
       city: "Leipzig",
     };
@@ -95,8 +104,7 @@ describe("toAddressLines", () => {
     const address: RecipientAddress = {
       kind: "house",
       contactPerson: { salutation: "herr", lastName: "Bauer" },
-      street: "Hauptstraße",
-      number: "12",
+      street: "Hauptstraße 12",
       zip: "04109",
       city: "Leipzig",
     };
@@ -108,8 +116,7 @@ describe("toAddressLines", () => {
     const address: RecipientAddress = {
       kind: "house",
       name: "Bruno Bertoni",
-      street: "Via Italia",
-      number: "212",
+      street: "Via Italia 212",
       zip: "20100",
       city: "Milano",
       country: "Italien",

@@ -9,8 +9,7 @@ import { mmToPt } from "./shared/geometry";
 const sender: LetterData["sender"] = {
   kind: "house",
   name: "Max Mustermann",
-  street: "Musterstraße",
-  number: "12",
+  street: "Musterstraße 12",
   zip: "12345",
   city: "Berlin",
 };
@@ -18,8 +17,7 @@ const sender: LetterData["sender"] = {
 const recipient: NonNullable<LetterData["recipient"]> = {
   kind: "house",
   name: "Musterfirma GmbH",
-  street: "Musterstraße",
-  number: "1",
+  street: "Musterstraße 1",
   zip: "12345",
   city: "Musterstadt",
 };

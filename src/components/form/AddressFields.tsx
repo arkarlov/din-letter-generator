@@ -20,6 +20,29 @@ const KINDS = {
   recipient: ["house", "pobox", "free"],
 } satisfies Record<string, AddressKind[]>;
 
+/**
+ * Autofill hints (HTML `autocomplete` tokens), so browsers can fill the
+ * sender from the address saved in their profile. The recipient's address
+ * gets none: the profile holds the user's own address, not the recipient's.
+ * The house number has no standard token, and the salutation values do not
+ * match what browsers store, so both are left out.
+ */
+const AUTOCOMPLETE: Record<keyof typeof KINDS, Record<string, string>> = {
+  sender: {
+    name: "name",
+    addon: "address-line2",
+    street: "address-line1",
+    zip: "postal-code",
+    city: "address-level2",
+    country: "country-name",
+  },
+  recipient: {
+    "contactPerson.title": "honorific-prefix",
+    "contactPerson.firstName": "given-name",
+    "contactPerson.lastName": "family-name",
+  },
+};
+
 type Props = {
   variant: keyof typeof KINDS;
   legend: string;
@@ -49,12 +72,17 @@ export function AddressFields({
 
   const field = (part: string) => {
     const fieldName = `${name}.${part}`;
+    const autofillToken = AUTOCOMPLETE[variant][part];
 
     return {
       id: `${id}-${part.replaceAll(".", "-")}`,
       name: fieldName,
       error: errors[fieldName],
       onChange: () => clearErrors(fieldName),
+      // A section keeps the sender and the recipient apart in one form.
+      autoComplete: autofillToken
+        ? `section-${name} ${autofillToken}`
+        : undefined,
     };
   };
 
@@ -126,15 +154,13 @@ export function AddressFields({
           />
 
           {kind === "house" ? (
-            <div className="grid grid-cols-[1fr_6rem] gap-3">
-              <InputField
-                {...field("street")}
-                label="Street"
-                maxLength={40}
-                required
-              />
-              <InputField {...field("number")} label="No." maxLength={9} />
-            </div>
+            <InputField
+              {...field("street")}
+              label="Street and number"
+              placeholder="Musterstraße 12"
+              maxLength={50}
+              required
+            />
           ) : (
             <InputField
               {...field("poBox")}

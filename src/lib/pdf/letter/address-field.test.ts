@@ -9,8 +9,7 @@ const letter: Pick<LetterData, "sender" | "recipient"> = {
   sender: {
     kind: "house",
     name: "Max Mustermann",
-    street: "Gartenweg",
-    number: "5",
+    street: "Gartenweg 5",
     zip: "04177",
     city: "Leipzig",
   },

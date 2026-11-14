@@ -35,8 +35,8 @@ const postalFields = {
 
 const houseFields = {
   kind: z.literal("house"),
-  street: requiredText("Street", 40),
-  number: optionalText("House number", 9),
+  /** Street and house number in one line, in the destination's own order. */
+  street: requiredText("Street", 50),
 };
 
 const poBoxFields = {

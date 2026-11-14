@@ -4,8 +4,7 @@ import { envelopeSchema } from "./schema";
 const sender = {
   kind: "house",
   name: "Max Mustermann",
-  street: "Musterstraße",
-  number: "12",
+  street: "Musterstraße 12",
   zip: "12345",
   city: "Berlin",
 };

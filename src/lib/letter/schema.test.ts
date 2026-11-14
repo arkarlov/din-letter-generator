@@ -5,8 +5,7 @@ import { letterSchema } from "./schema";
 const sender = {
   kind: "house",
   name: "Max Mustermann",
-  street: "Musterstraße",
-  number: "12",
+  street: "Musterstraße 12",
   zip: "12345",
   city: "Berlin",
 };
@@ -14,8 +13,7 @@ const sender = {
 const recipient = {
   kind: "house",
   name: "Musterfirma GmbH",
-  street: "Musterstraße",
-  number: "1",
+  street: "Musterstraße 1",
   zip: "12345",
   city: "Musterstadt",
 };
@@ -41,15 +39,13 @@ const validFormFields = {
   "sender.kind": "house",
   "sender.name": "Max Mustermann",
   "sender.addon": "",
-  "sender.street": "Musterstraße",
-  "sender.number": "12",
+  "sender.street": "Musterstraße 12",
   "sender.zip": "12345",
   "sender.city": "Berlin",
   "sender.country": "",
   "recipient.kind": "house",
   "recipient.name": "Musterfirma GmbH",
-  "recipient.street": "Musterstraße",
-  "recipient.number": "1",
+  "recipient.street": "Musterstraße 1",
   "recipient.zip": "12345",
   "recipient.city": "Musterstadt",
   returnLineOverride: "",
