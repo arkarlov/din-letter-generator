@@ -42,7 +42,7 @@ describe("toAddressLines", () => {
     ]);
   });
 
-  it("places the addition and contact person below the company", () => {
+  it("places the contact person and then the addition below the company", () => {
     const address: RecipientAddress = {
       kind: "house",
       name: "Beispiel AG",
@@ -61,10 +61,33 @@ describe("toAddressLines", () => {
 
     expect(toAddressLines(address)).toEqual([
       "Beispiel AG",
-      "Einkauf",
       "Frau Dr. Jana Schulz",
+      "Einkauf",
       "Hafenweg 4",
       "20457 Hamburg",
+    ]);
+  });
+
+  it("puts c/o after a private recipient given as a contact person", () => {
+    const address: RecipientAddress = {
+      kind: "house",
+      addon: "c/o Erika Muster",
+      contactPerson: {
+        salutation: "herr",
+        firstName: "Jan",
+        lastName: "Bauer",
+      },
+      street: "Gartenweg",
+      number: "5",
+      zip: "04177",
+      city: "Leipzig",
+    };
+
+    expect(toAddressLines(address)).toEqual([
+      "Herrn Jan Bauer",
+      "c/o Erika Muster",
+      "Gartenweg 5",
+      "04177 Leipzig",
     ]);
   });
 

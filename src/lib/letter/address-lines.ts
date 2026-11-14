@@ -38,10 +38,12 @@ export function toAddressLines(
   const contactPerson =
     "contactPerson" in address ? address.contactPerson : undefined;
 
+  // The addressee comes first: company or authority, then the contact person.
+  // The addition follows both, so a c/o line never precedes the addressee.
   return normalizeLines([
     address.name,
-    address.addon,
     contactPerson && toContactLine(contactPerson),
+    address.addon,
     address.kind === "house"
       ? `${address.street} ${address.number ?? ""}`
       : `Postfach ${address.poBox}`,
