@@ -58,11 +58,20 @@ describe("generateLetterPDF", () => {
     expect(page.getSize().height).toBe(PageSizes.A4[1]);
   });
 
-  it("sets the document title from the letter form", async () => {
+  it("describes the letter in the document metadata", async () => {
     const bytes = await generateLetterPDF(createLetter("Guten Tag."));
     const document = await PDFDocument.load(bytes);
 
-    expect(document.getTitle()).toBe("Brief Form B (DIN 5008)");
+    expect(document.getTitle()).toBe(
+      "Letter to Musterfirma GmbH dated 7 October 2026: Anfrage",
+    );
+    expect(document.getAuthor()).toBe("Max Mustermann");
+    expect(document.getSubject()).toBe("Anfrage");
+    expect(document.getCreator()).toBe("DIN 5008 Letter Generator");
+    // Viewers show the title instead of the file name.
+    expect(document.catalog.getViewerPreferences()?.getDisplayDocTitle()).toBe(
+      true,
+    );
   });
 
   it("creates additional pages when the message exceeds the first page", async () => {

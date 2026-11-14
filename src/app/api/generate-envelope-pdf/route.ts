@@ -1,3 +1,5 @@
+import { envelopeFileName } from "@/lib/envelope/document-name";
+import { attachmentHeader } from "@/lib/document/file-name";
 import { NextResponse } from "next/server";
 import { envelopeSchema } from "@/lib/envelope/schema";
 import { PdfLayoutError } from "@/lib/pdf/shared/errors";
@@ -31,7 +33,7 @@ export async function POST(req: Request) {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": 'attachment; filename="envelope.pdf"',
+        "Content-Disposition": attachmentHeader(envelopeFileName(parsed.data)),
         "Content-Length": pdfBytes.length.toString(),
       },
     });

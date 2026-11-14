@@ -3,13 +3,7 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import { mmToPt } from "../shared/geometry";
 import { layoutFirstPage } from "./first-page";
 import { createLayout, LAYOUT_FONT } from "./layout";
-import { formatLetterDate, renderLetterHeader } from "./letter-renderer";
-
-describe("formatLetterDate", () => {
-  it("formats an ISO calendar date without a timezone shift", () => {
-    expect(formatLetterDate("2026-10-20")).toBe("20. Oktober 2026");
-  });
-});
+import { renderLetterHeader } from "./letter-renderer";
 
 describe("renderLetterHeader", () => {
   it("puts the return line and recipient at their zone tops and the note at the bottom", async () => {

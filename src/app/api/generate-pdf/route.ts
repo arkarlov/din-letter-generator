@@ -1,3 +1,5 @@
+import { letterFileName } from "@/lib/letter/document-name";
+import { attachmentHeader } from "@/lib/document/file-name";
 import { letterSchema } from "@/lib/letter/schema";
 import { generateLetterPDF } from "@/lib/pdf/generate";
 import { PdfLayoutError } from "@/lib/pdf/shared/errors";
@@ -48,7 +50,7 @@ export async function POST(req: Request) {
         status: 200,
         headers: {
           "Content-Type": "application/pdf",
-          "Content-Disposition": 'attachment; filename="letter.pdf"',
+          "Content-Disposition": attachmentHeader(letterFileName(parsed.data)),
           "Content-Length": pdfBytes.length.toString(),
         },
       },

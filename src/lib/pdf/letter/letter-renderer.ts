@@ -12,15 +12,6 @@ import type { AddressField } from "./address-field";
 import { LAYOUT_FONT, PAGE_GEOMETRY, PAGE_NUMBER_FONT } from "./layout";
 import type { Layout } from "./types";
 
-export function formatLetterDate(date: string): string {
-  return new Date(`${date}T00:00:00.000Z`).toLocaleDateString("de-DE", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-}
-
 type RenderLetterPageProps = {
   page: PDFPage;
   layout: Layout;
