@@ -48,8 +48,6 @@ const validFormFields = {
   "sender.country": "",
   "recipient.kind": "house",
   "recipient.name": "Musterfirma GmbH",
-  "recipient.contactPerson.salutation": "",
-  "recipient.contactPerson.lastName": "",
   "recipient.street": "Musterstraße",
   "recipient.number": "1",
   "recipient.zip": "12345",
@@ -209,6 +207,26 @@ describe("letterSchema", () => {
       expect(noName.error.issues[0]?.path).toEqual(["recipient", "name"]);
     }
     expect(contactOnly.success).toBe(true);
+  });
+
+  it("requires the last name when the contact person is left empty", () => {
+    // The switch renders these inputs; leaving them all empty must not pass.
+    const result = letterSchema.safeParse(
+      toFormData({
+        ...validFormFields,
+        "recipient.contactPerson.salutation": "",
+        "recipient.contactPerson.title": "",
+        "recipient.contactPerson.firstName": "",
+        "recipient.contactPerson.lastName": "",
+      }),
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(getFieldErrors(result.error)).toEqual({
+        "recipient.contactPerson.lastName": "Last name is required",
+      });
+    }
   });
 
   it("requires the last name of a started contact person", () => {

@@ -14,14 +14,14 @@ describe("formDataToObject", () => {
     });
   });
 
-  it("drops empty nested values and their empty parents", () => {
+  it("drops empty nested values but keeps their rendered groups", () => {
     const formData = new FormData();
     formData.set("recipient.kind", "house");
     formData.set("recipient.addon", "");
     formData.set("recipient.contactPerson.lastName", "");
 
     expect(formDataToObject(formData)).toEqual({
-      recipient: { kind: "house" },
+      recipient: { kind: "house", contactPerson: {} },
     });
   });
 
