@@ -72,6 +72,17 @@ describe("letterSchema", () => {
     }
   });
 
+  it("takes the letter format from the form", () => {
+    const result = letterSchema.safeParse(
+      toFormData({ ...validFormFields, letterType: "A" }),
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.letterType).toBe("A");
+    }
+  });
+
   it("reports every empty required field by its full name", () => {
     const result = letterSchema.safeParse(
       toFormData({

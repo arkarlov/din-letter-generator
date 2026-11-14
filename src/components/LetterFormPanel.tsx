@@ -3,14 +3,21 @@
 import { useState } from "react";
 import { useGenerateLetterPdf } from "@/hooks/usePdfGenerator";
 import { AddressFields } from "./form/AddressFields";
+import { Field } from "./form/Field";
 import { InputField } from "./form/InputField";
 import { TextareaField } from "./form/TextareaField";
 import { Switch } from "./form/Switch";
 import { StampInfo } from "./StampInfo";
 import { PdfRequestError } from "@/lib/api/pdf";
-import { letterSchema } from "@/lib/letter/schema";
+import { letterSchema, type LetterType } from "@/lib/letter/schema";
 import { formatDateInputValue } from "@/lib/letter/date";
 import { getFieldErrors, type FieldErrors } from "@/lib/letter/field-errors";
+
+/** Form B first: it is the default and the more common layout. */
+const LETTER_TYPE_LABELS = {
+  B: "Form B (Standard)",
+  A: "Form A (Hochgestellt)",
+} satisfies Record<LetterType, string>;
 
 const POSTAL_NOTES = [
   "Einschreiben",
@@ -87,6 +94,20 @@ export function LetterFormPanel() {
 
       <form id="letter-form" onSubmit={submit} noValidate>
         <div className="space-y-5">
+          <Field label="Letter format (DIN 5008)" id="letter-type">
+            <select
+              id="letter-type"
+              name="letterType"
+              defaultValue="B"
+              className="block w-full max-w-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-300"
+            >
+              {Object.entries(LETTER_TYPE_LABELS).map(([type, label]) => (
+                <option key={type} value={type}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </Field>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <div className="space-y-3">
               <AddressFields

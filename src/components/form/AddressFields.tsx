@@ -107,7 +107,8 @@ export function AddressFields({
             {...field("name")}
             label={variant === "sender" ? "Name" : "Name / Company"}
             maxLength={50}
-            required={variant === "sender"}
+            // A recipient needs a name or a contact person, not both.
+            required={variant === "sender" || !hasContactPerson}
           />
           <InputField
             {...field("addon")}
