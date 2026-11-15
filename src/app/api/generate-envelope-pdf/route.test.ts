@@ -3,18 +3,30 @@ import { PDFDocument } from "pdf-lib";
 import { POST } from "./route";
 
 const validEnvelope = {
-  sender: "Max Mustermann\nMusterstraße 12\n12345 Berlin",
-  recipient: "Musterfirma GmbH\nMusterstraße 1\n12345 Musterstadt",
+  sender: {
+    kind: "house",
+    name: "Max Mustermann",
+    street: "Musterstraße 12",
+    zip: "12345",
+    city: "Berlin",
+  },
+  recipient: {
+    kind: "free",
+    text: "Musterfirma GmbH\nMusterstraße 1\n12345 Musterstadt",
+  },
   format: "DL",
 };
 
 describe("POST /api/generate-envelope-pdf", () => {
-  it("returns 400 when an address has fewer than two lines", async () => {
+  it("returns 400 when a free text address has fewer than two lines", async () => {
     const response = await POST(
       new Request("http://localhost/api/generate-envelope-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...validEnvelope, sender: "Max Mustermann" }),
+        body: JSON.stringify({
+          ...validEnvelope,
+          recipient: { kind: "free", text: "Max Mustermann" },
+        }),
       }),
     );
 
@@ -33,8 +45,8 @@ describe("POST /api/generate-envelope-pdf", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/pdf");
-    expect(response.headers.get("Content-Disposition")).toContain(
-      'filename="envelope.pdf"',
+    expect(response.headers.get("Content-Disposition")).toMatch(
+      /^attachment; filename="Envelope_MusterfirmaGmbH_MaxMustermann_\d{4}-\d{2}-\d{2}\.pdf"; filename\*=UTF-8''/,
     );
     expect(document.getPageCount()).toBe(1);
     expect(document.getPage(0).getRotation().angle).toBe(90);
@@ -62,8 +74,10 @@ describe("POST /api/generate-envelope-pdf", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...validEnvelope,
-          recipient:
-            "Ivan Ivanov\nLeningradskiy Prospekt 39, Bldg. 1, Apt. 14\n125167 MOSCOW\nИван Иванов\n125167, г. Москва, Ленинградский пр-кт, д. 39, корп. 1, кв. 14\nRUSSIA",
+          recipient: {
+            kind: "free",
+            text: "Ivan Ivanov\nLeningradskiy Prospekt 39, Bldg. 1, Apt. 14\n125167 MOSCOW\nИван Иванов\n125167, г. Москва, Ленинградский пр-кт, д. 39, корп. 1, кв. 14\nRUSSIA",
+          },
         }),
       }),
     );

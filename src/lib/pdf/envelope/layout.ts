@@ -1,4 +1,4 @@
-import type { EnvelopeFormat } from "@/lib/letter/envelope-schema";
+import type { EnvelopeFormat } from "@/lib/envelope/schema";
 import { PdfLayoutError } from "../shared/errors";
 import type { MmBlockZone } from "../shared/types";
 

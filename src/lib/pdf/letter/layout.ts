@@ -1,6 +1,7 @@
 import type { LetterType } from "@/lib/letter/schema";
-import type { FontLayout, Layout } from "./types";
+import type { FontLayout, LayoutGeometry } from "./types";
 
+/** Absolute page coordinates, the same for Form A and B. */
 export const PAGE_GEOMETRY = {
   widthMm: 210,
   heightMm: 297,
@@ -11,19 +12,27 @@ export const PAGE_GEOMETRY = {
   contentWidthMm: 165,
   bottomMarginMm: 25,
   footerBaselineMm: 7,
+  /** The envelope window. Address text starts 5 mm further right. */
+  addressFieldXMm: 20,
+  addressFieldWidthMm: 85,
 } as const;
 
-const BODY = {
-  senderHeightMm: 17.7,
-  recipientHeightMm: 27.3,
-  infoTopOffsetMm: 5,
-  infoHeightMm: 45,
-  dateTopOffsetMm: 53,
-  foldMarksOffsetsMm: [60, 165],
-  // B previously used 106/125 mm for these anchors; keep the discrepancy
-  // noted while the zero-header translation is investigated.
-  subjectTopMm: 63,
-  contentTopMm: 83,
+/** Vertical sizes from the bottom of the letterhead (27 mm Form A, 45 mm Form B). */
+const BELOW_LETTERHEAD_MM = {
+  /** Zusatz- und Vermerkzone: return line and postal notes. */
+  returnZoneHeight: 17.7,
+  /** Anschriftzone: recipient address. */
+  addressZoneHeight: 27.3,
+  infoTopOffset: 5,
+  foldMarkOffsets: [60, 165],
+} as const;
+
+/** DIN 5008 distances between blocks whose position depends on content. */
+export const FLOW_MM = {
+  /** Two blank lines of 4.23 mm: before the subject and before the text. */
+  blankLinesGap: 8.46,
+  /** The information block, date included, is at least this tall. */
+  infoBlockMinHeight: 40,
 } as const;
 
 const LETTERHEAD_HEIGHTS_MM: Record<LetterType, number> = {
@@ -31,7 +40,7 @@ const LETTERHEAD_HEIGHTS_MM: Record<LetterType, number> = {
   B: 45,
 };
 
-export const createLayout = (letterType: LetterType): Layout => {
+export const createLayout = (letterType: LetterType): LayoutGeometry => {
   const letterheadHeightMm = LETTERHEAD_HEIGHTS_MM[letterType];
 
   return {
@@ -40,36 +49,32 @@ export const createLayout = (letterType: LetterType): Layout => {
       xMm: PAGE_GEOMETRY.leftMarginMm,
       yMm: letterheadHeightMm,
       widthMm: PAGE_GEOMETRY.leftColumnWidthMm,
-      heightMm: BODY.senderHeightMm,
+      heightMm: BELOW_LETTERHEAD_MM.returnZoneHeight,
     },
     recipient: {
       xMm: PAGE_GEOMETRY.leftMarginMm,
-      yMm: letterheadHeightMm + BODY.senderHeightMm,
+      yMm: letterheadHeightMm + BELOW_LETTERHEAD_MM.returnZoneHeight,
       widthMm: PAGE_GEOMETRY.leftColumnWidthMm,
-      heightMm: BODY.recipientHeightMm,
+      heightMm: BELOW_LETTERHEAD_MM.addressZoneHeight,
     },
     info: {
       xMm: PAGE_GEOMETRY.rightColumnXMm,
-      yMm: letterheadHeightMm + BODY.infoTopOffsetMm,
+      yMm: letterheadHeightMm + BELOW_LETTERHEAD_MM.infoTopOffset,
       widthMm: PAGE_GEOMETRY.rightColumnWidthMm,
-      heightMm: BODY.infoHeightMm,
     },
     date: {
       xMm: PAGE_GEOMETRY.rightColumnXMm,
-      yMm: letterheadHeightMm + BODY.dateTopOffsetMm,
       widthMm: PAGE_GEOMETRY.rightColumnWidthMm,
     },
     subject: {
       xMm: PAGE_GEOMETRY.leftMarginMm,
-      yMm: BODY.subjectTopMm + letterheadHeightMm,
       widthMm: PAGE_GEOMETRY.contentWidthMm,
     },
     content: {
       xMm: PAGE_GEOMETRY.leftMarginMm,
-      yMm: BODY.contentTopMm + letterheadHeightMm,
       widthMm: PAGE_GEOMETRY.contentWidthMm,
     },
-    foldMarksMm: BODY.foldMarksOffsetsMm.map(
+    foldMarksMm: BELOW_LETTERHEAD_MM.foldMarkOffsets.map(
       (offsetMm) => letterheadHeightMm + offsetMm,
     ),
   };

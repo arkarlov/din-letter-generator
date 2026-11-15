@@ -6,7 +6,8 @@ type Props = {
   checked: boolean;
   onChange: (v: boolean) => void;
   label: string;
-  name: string;
+  /** Only needed when the server must receive the switch state. */
+  name?: string;
 };
 
 export function Switch({ checked, label, name, onChange }: Props) {

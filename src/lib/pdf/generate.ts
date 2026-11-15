@@ -1,18 +1,38 @@
 import { PDFDocument, PageSizes } from "pdf-lib";
 
-import type { EnvelopeData } from "@/lib/letter/envelope-schema";
+import { envelopeTitle } from "@/lib/envelope/document-name";
+import type { EnvelopeData } from "@/lib/envelope/schema";
+import { toAddressLines } from "@/lib/letter/address-lines";
+import { formatLetterDate } from "@/lib/letter/date";
+import { letterTitle } from "@/lib/letter/document-name";
 import type { LetterData } from "@/lib/letter/schema";
 import { renderEnvelopePage } from "./envelope/envelope-renderer";
 import { createEnvelopeLayout } from "./envelope/layout";
+import { prepareAddressField } from "./letter/address-field";
+import { renderLayoutGuides } from "./letter/debug-guides";
+import { layoutFirstPage } from "./letter/first-page";
 import { createLayout, LAYOUT_FONT } from "./letter/layout";
-import {
-  formatLetterDate,
-  renderLetterPage,
-  renderPageNumbers,
-} from "./letter/letter-renderer";
+import { renderLetterPage, renderPageNumbers } from "./letter/letter-renderer";
 import { paginateContent } from "./letter/pagination";
 import { embedNotoSans } from "./shared/fonts";
 import { mmToPt } from "./shared/geometry";
+
+const CREATOR = "DIN 5008 Letter Generator";
+
+/**
+ * Metadata that PDF viewers and file managers show. The viewer displays the
+ * title instead of the file name, as PDF/UA recommends.
+ */
+function setDocumentInfo(
+  document: PDFDocument,
+  info: { title: string; author: string; subject?: string },
+) {
+  document.setTitle(info.title, { showInWindowTitleBar: true });
+  document.setAuthor(info.author);
+  if (info.subject) document.setSubject(info.subject);
+  document.setLanguage("de-DE");
+  document.setCreator(CREATOR);
+}
 
 /**
  * Generate a PDF document with letter content
@@ -23,14 +43,30 @@ import { mmToPt } from "./shared/geometry";
  */
 export async function generateLetterPDF(data: LetterData): Promise<Uint8Array> {
   const document = await PDFDocument.create();
-  document.setTitle(`Brief Form ${data.letterType} (DIN 5008)`);
+  setDocumentInfo(document, {
+    title: letterTitle(data),
+    author: data.sender.name,
+    subject: data.subject,
+  });
 
   const font = await embedNotoSans(document);
   const fontBold = await embedNotoSans(document, "bold");
 
-  const { recipientAddress, infoBlock, subject, returnAddress } = data;
+  const { subject } = data;
+  const infoBlock =
+    data.customInfoBlock ?? toAddressLines(data.sender).join("\n");
+  // A ready stamp already carries both addresses, so the window stays empty.
+  const addressField = data.useReadyStamp
+    ? undefined
+    : prepareAddressField(data, font);
 
-  const layout = createLayout(data.letterType);
+  const layout = layoutFirstPage({
+    geometry: createLayout(data.letterType),
+    font,
+    fontBold,
+    infoBlock,
+    subject,
+  });
   const formattedDate = formatLetterDate(data.date);
   const contentPages = paginateContent(
     data.message,
@@ -41,16 +77,20 @@ export async function generateLetterPDF(data: LetterData): Promise<Uint8Array> {
 
   contentPages.forEach((content, i) => {
     const isFirstPage = i === 0;
+    const page = document.addPage(PageSizes.A4);
+
+    if (data.showGuides) {
+      renderLayoutGuides({ page, layout, font, isFirstPage });
+    }
 
     renderLetterPage({
-      page: document.addPage(PageSizes.A4),
+      page,
       layout,
       font,
       fontBold,
       content,
       isFirstPage,
-      returnAddress,
-      recipientAddress,
+      addressField,
       infoBlock,
       formattedDate,
       subject,
@@ -73,7 +113,10 @@ export async function generateEnvelopePDF(
   data: EnvelopeData,
 ): Promise<Uint8Array> {
   const document = await PDFDocument.create();
-  document.setTitle(`Briefumschlag ${data.format} (DIN 5008)`);
+  setDocumentInfo(document, {
+    title: envelopeTitle(data),
+    author: data.sender.name,
+  });
 
   const font = await embedNotoSans(document);
   const layout = createEnvelopeLayout(data.format);
@@ -82,8 +125,8 @@ export async function generateEnvelopePDF(
     page: document.addPage([mmToPt(layout.widthMm), mmToPt(layout.heightMm)]),
     layout,
     font,
-    sender: data.sender,
-    recipient: data.recipient,
+    sender: toAddressLines(data.sender).join("\n"),
+    recipient: toAddressLines(data.recipient).join("\n"),
   });
 
   return document.save();

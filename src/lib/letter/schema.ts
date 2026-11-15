@@ -1,5 +1,9 @@
 import z from "zod";
+import { recipientAddressSchema, senderAddressSchema } from "./address";
+import { toAddressLines } from "./address-lines";
 import { formDataToLetterInput } from "./form-data";
+
+const MAX_RECIPIENT_LINES = 6;
 
 const isValidDateOnly = (value: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -11,36 +15,30 @@ const isValidDateOnly = (value: string) => {
   );
 };
 
-const hasAtLeastTwoLines = (value: string) => {
-  const lines = value
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  return lines.length >= 2;
-};
-
 const letterObjectSchema = z
   .object({
     letterType: z.enum(["A", "B"]).default("B"),
     useReadyStamp: z.boolean().default(false),
-    recipientAddress: z
+    /** Debug aid: draw a millimetre grid and the layout zones. */
+    showGuides: z.boolean().default(false),
+    sender: senderAddressSchema,
+    returnLineOverride: z
       .string()
       .trim()
-      .max(500, { message: "Recipient address is too long" })
+      .max(200, { message: "Return line is too long" })
       .optional(),
-    returnAddress: z
+    note: z
       .string()
       .trim()
-      .max(500, { message: "Return address is too long" })
+      .max(100, { message: "Postal note is too long" })
       .optional(),
-    infoBlock: z
+    recipient: recipientAddressSchema.optional(),
+    customInfoBlock: z
       .string()
       .trim()
-      .refine(hasAtLeastTwoLines, {
-        message: "Address must contain at least 2 lines.",
-      })
-      .max(500, { message: "Info block is too long" }),
+      .min(1, { message: "Info block is required" })
+      .max(500, { message: "Info block is too long" })
+      .optional(),
     date: z
       .string()
       .trim()
@@ -60,20 +58,20 @@ const letterObjectSchema = z
       }),
   })
   .superRefine((data, ctx) => {
-    if (!data.useReadyStamp) {
-      if (!data.recipientAddress || data.recipientAddress.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          message: "Recipient address is required when useReadyStamp is false",
-          path: ["recipientAddress"],
-        });
-      } else if (!hasAtLeastTwoLines(data.recipientAddress)) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Address must contain at least 2 lines.",
-          path: ["recipientAddress"],
-        });
-      }
+    if (data.useReadyStamp) return;
+
+    if (!data.recipient) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Recipient address is required when useReadyStamp is false",
+        path: ["recipient"],
+      });
+    } else if (toAddressLines(data.recipient).length > MAX_RECIPIENT_LINES) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Recipient address must not exceed ${MAX_RECIPIENT_LINES} lines`,
+        path: ["recipient"],
+      });
     }
   });
 

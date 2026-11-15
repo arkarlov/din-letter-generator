@@ -8,7 +8,7 @@ export default function FormPanel() {
   const [activeTab, setActiveTab] = useState<"letter" | "envelope">("letter");
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">
         {activeTab === "letter" ? "Create Letter" : "Create Envelope"}
       </h1>
@@ -48,7 +48,7 @@ export default function FormPanel() {
         aria-labelledby="letter-tab"
         hidden={activeTab !== "letter"}
       >
-        {activeTab === "letter" && <LetterFormPanel />}
+        <LetterFormPanel />
       </section>
 
       <section
@@ -57,7 +57,7 @@ export default function FormPanel() {
         aria-labelledby="envelope-tab"
         hidden={activeTab !== "envelope"}
       >
-        {activeTab === "envelope" && <EnvelopeFormPanel />}
+        <EnvelopeFormPanel />
       </section>
     </div>
   );

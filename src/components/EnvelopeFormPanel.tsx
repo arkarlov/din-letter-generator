@@ -6,9 +6,11 @@ import {
   envelopeFormatSchema,
   envelopeSchema,
   type EnvelopeData,
-} from "@/lib/letter/envelope-schema";
+} from "@/lib/envelope/schema";
+import { formDataToObject } from "@/lib/letter/form-data";
+import { getFieldErrors, type FieldErrors } from "@/lib/letter/field-errors";
+import { AddressFields } from "./form/AddressFields";
 import { Field } from "./form/Field";
-import { TextareaField } from "./form/TextareaField";
 
 const envelopeFormatLabels = {
   DL: "DL (110 × 220 mm)",
@@ -17,12 +19,10 @@ const envelopeFormatLabels = {
 
 export function EnvelopeFormPanel() {
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<
-    Partial<Record<keyof EnvelopeData, string>>
-  >({});
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const { isLoading, generatePdf } = useGenerateEnvelopePdf();
 
-  const clearFieldError = (field: keyof EnvelopeData) => {
+  const clearFieldError = (field: string) => {
     setFieldErrors((previous) => {
       if (!previous[field]) return previous;
       const next = { ...previous };
@@ -36,22 +36,10 @@ export function EnvelopeFormPanel() {
     setError(null);
 
     const formData = new FormData(event.currentTarget);
-    const result = envelopeSchema.safeParse(
-      Object.fromEntries(formData.entries()),
-    );
+    const result = envelopeSchema.safeParse(formDataToObject(formData));
 
     if (!result.success) {
-      const nextErrors: Partial<Record<keyof EnvelopeData, string>> = {};
-      for (const issue of result.error.issues) {
-        const field = issue.path[0];
-        if (
-          (field === "sender" || field === "recipient") &&
-          !nextErrors[field]
-        ) {
-          nextErrors[field] = issue.message;
-        }
-      }
-      setFieldErrors(nextErrors);
+      setFieldErrors(getFieldErrors(result.error));
       return;
     }
 
@@ -69,7 +57,7 @@ export function EnvelopeFormPanel() {
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="space-y-6">
       {error && (
         <div
           role="alert"
@@ -82,13 +70,13 @@ export function EnvelopeFormPanel() {
       )}
 
       <form id="envelope-form" onSubmit={submit} noValidate>
-        <div className="space-y-5">
-          <Field label="Envelope format" name="envelope-format">
+        <div className="space-y-4">
+          <Field label="Envelope format" id="envelope-format">
             <select
               id="envelope-format"
               name="format"
               defaultValue="DL"
-              className="block w-full max-w-xs rounded-lg border border-gray-300 bg-white p-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-300"
+              className="block w-full max-w-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-300"
             >
               {envelopeFormatSchema.options.map((format) => (
                 <option key={format} value={format}>
@@ -102,30 +90,28 @@ export function EnvelopeFormPanel() {
               */}
             </select>
           </Field>
-          <TextareaField
-            className="resize-y"
-            label="Sender address"
-            name="sender"
-            rows={4}
-            placeholder={"Max Mustermann\nMusterstraße 12\n12345 Berlin"}
-            required
-            error={fieldErrors.sender}
-            onChange={() => clearFieldError("sender")}
-          />
-          <TextareaField
-            className="resize-y"
-            label="Recipient address"
-            name="recipient"
-            rows={5}
-            placeholder={"Musterfirma GmbH\nMusterstraße 1\n12345 Musterstadt"}
-            required
-            error={fieldErrors.recipient}
-            onChange={() => clearFieldError("recipient")}
-          />
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <AddressFields
+              variant="sender"
+              legend="Sender address"
+              name="sender"
+              id="envelope-sender"
+              errors={fieldErrors}
+              onFieldChange={clearFieldError}
+            />
+            <AddressFields
+              variant="recipient"
+              legend="Recipient address"
+              name="recipient"
+              id="envelope-recipient"
+              errors={fieldErrors}
+              onFieldChange={clearFieldError}
+            />
+          </div>
         </div>
       </form>
 
-      <aside className="space-y-2 text-sm text-gray-600">
+      <aside className="max-w-prose space-y-2 text-sm text-gray-600">
         <p>
           For international mail, write the address in Latin characters without
           blank lines. Put the destination country on the last line in uppercase

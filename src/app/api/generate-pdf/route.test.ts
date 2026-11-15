@@ -12,8 +12,17 @@ import { POST } from "./route";
 const validLetter = {
   letterType: "B",
   useReadyStamp: false,
-  recipientAddress: "Musterfirma GmbH\nMusterstraße 1\n12345 Musterstadt",
-  infoBlock: "Max Mustermann\n12345 Berlin",
+  sender: {
+    kind: "house",
+    name: "Max Mustermann",
+    street: "Musterstraße 12",
+    zip: "12345",
+    city: "Berlin",
+  },
+  recipient: {
+    kind: "free",
+    text: "Musterfirma GmbH\nMusterstraße 1\n12345 Musterstadt",
+  },
   date: "2026-10-20",
   subject: "Anfrage",
   message: "Guten Tag",
@@ -57,6 +66,27 @@ describe("POST /api/generate-pdf", () => {
     expect(response.status).toBe(422);
     await expect(response.json()).resolves.toEqual({
       error: "Text block exceeds allowed height",
+    });
+  });
+
+  it("names the form field that does not fit", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    generateLetterPDF.mockRejectedValue(
+      new PdfLayoutError("Too wide", "returnLineOverride"),
+    );
+
+    const response = await POST(
+      new Request("http://localhost/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validLetter),
+      }),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toEqual({
+      error: "Too wide",
+      field: "returnLineOverride",
     });
   });
 
